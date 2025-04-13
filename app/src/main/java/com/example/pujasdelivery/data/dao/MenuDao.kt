@@ -16,4 +16,8 @@ interface MenuDao {
 
     @Query("SELECT menus.*, tenants.name AS tenantName FROM menus JOIN tenants ON menus.tenantId = tenants.id WHERE menus.tenantId = :tenantId")
     suspend fun getMenusWithTenantName(tenantId: Int): List<MenuWithTenantName>
+
+    // Tambahkan fungsi baru untuk mengambil semua menu dari semua tenant
+    @Query("SELECT menus.*, tenants.name AS tenantName FROM menus JOIN tenants ON menus.tenantId = tenants.id")
+    suspend fun getAllMenusWithTenantName(): List<MenuWithTenantName>
 }

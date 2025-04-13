@@ -61,6 +61,13 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                         Menu(
                             id = 0,
                             tenantId = insertedTenantIds[1].toInt(),
+                            name = "Mie Ayam", // Mie Ayam juga ada di Warung YY
+                            price = 16000,
+                            description = "Mie ayam spesial"
+                        ),
+                        Menu(
+                            id = 0,
+                            tenantId = insertedTenantIds[1].toInt(),
                             name = "Nasi Goreng",
                             price = 20000,
                             description = "Nasi goreng spesial"
@@ -76,10 +83,8 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                     menuDao.insertAll(*menuList.toTypedArray())
                 }
 
-                val firstTenant = tenantDao.getAllTenants().firstOrNull()
-                if (firstTenant != null) {
-                    loadMenusForTenant(firstTenant.id)
-                }
+                // Ambil semua menu dari semua tenant
+                loadAllMenus()
 
                 _loadingState.value = LoadingState.Success
             } catch (e: Exception) {
@@ -88,6 +93,20 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    private fun loadAllMenus() {
+        viewModelScope.launch {
+            try {
+                _loadingState.value = LoadingState.Loading
+                val allMenus = menuDao.getAllMenusWithTenantName()
+                _menus.value = allMenus
+                _loadingState.value = LoadingState.Success
+            } catch (e: Exception) {
+                _loadingState.value = LoadingState.Error
+            }
+        }
+    }
+
+    // Fungsi ini tetap ada jika diperlukan untuk kasus lain
     fun loadMenusForTenant(tenantId: Int) {
         viewModelScope.launch {
             try {

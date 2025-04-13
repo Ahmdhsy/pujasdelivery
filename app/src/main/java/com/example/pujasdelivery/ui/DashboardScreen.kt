@@ -3,6 +3,7 @@ package com.example.pujasdelivery.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -34,96 +35,125 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostControl
     val loadingState by viewModel.loadingState.observeAsState(initial = DashboardViewModel.LoadingState.Idle)
     var searchQuery by remember { mutableStateOf("") }
 
-    // Filter menu berdasarkan query pencarian
-    val filteredMenus = menus.filter {
+    // Kelompokkan menu berdasarkan nama untuk mendapatkan menu unik
+    val groupedMenus = menus.groupBy { it.name }
+    val uniqueMenus = groupedMenus.map { (name, items) -> items.first() }
+
+    // Filter menu unik berdasarkan query pencarian
+    val filteredMenus = uniqueMenus.filter {
         it.name.contains(searchQuery, ignoreCase = true) ||
                 it.description.contains(searchQuery, ignoreCase = true)
     }
 
-    Column(modifier = Modifier.padding(16.dp)) {
-        // Header
-        Text(
-            text = "Temukan makanan dan minuman yang ingin Anda pesan di Pujasera POLBAN!",
-            style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        // Kolom Pencarian
-        SearchBar(
-            searchQuery = searchQuery,
-            onSearchQueryChange = { searchQuery = it },
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        // Kategori (tanpa judul "Kategori")
-        Row(
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 16.dp)
+                .padding(top = 16.dp)
         ) {
-            CategoryCard(category = "Makanan") {
-                Icon(
-                    imageVector = Icons.Default.Restaurant,
-                    contentDescription = "Makanan Icon",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            CategoryCard(category = "Minuman") {
-                Icon(
-                    imageVector = Icons.Default.LocalCafe,
-                    contentDescription = "Minuman Icon",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
+            Text(
+                text = "Temukan makanan dan minuman yang ingin Anda pesan di Pujasera POLBAN!",
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            SearchBar(
+                searchQuery = searchQuery,
+                onSearchQueryChange = { searchQuery = it },
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
         }
 
-        // Daftar Menu (tanpa judul "Menu")
-        when (loadingState) {
-            DashboardViewModel.LoadingState.Loading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-            }
-            DashboardViewModel.LoadingState.Error -> {
-                Text(
-                    text = "Terjadi kesalahan saat memuat data",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-            }
-            else -> {
-                if (filteredMenus.isNotEmpty()) {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CategoryCard(
+                        category = "Makanan",
+                        onClick = { navController.navigate("category/Makanan") }
                     ) {
-                        items(filteredMenus) { menu ->
-                            MenuCard(
-                                menu = menu,
-                                onClick = {
-                                    // Navigate to a detail screen for this menu
-                                    navController.navigate("menuDetail/${menu.name}")
+                        Icon(
+                            imageVector = Icons.Default.Restaurant,
+                            contentDescription = "Makanan Icon",
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    CategoryCard(
+                        category = "Minuman",
+                        onClick = { navController.navigate("category/Minuman") }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocalCafe,
+                            contentDescription = "Minuman Icon",
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+            }
+
+            item {
+                when (loadingState) {
+                    DashboardViewModel.LoadingState.Loading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                                .wrapContentWidth(Alignment.CenterHorizontally)
+                        )
+                    }
+                    DashboardViewModel.LoadingState.Error -> {
+                        Text(
+                            text = "Terjadi kesalahan saat memuat data",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                                .wrapContentWidth(Alignment.CenterHorizontally)
+                        )
+                    }
+                    else -> {
+                        if (filteredMenus.isNotEmpty()) {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 1000.dp)
+                            ) {
+                                items(filteredMenus) { menu ->
+                                    MenuCard(
+                                        menu = menu,
+                                        onClick = {
+                                            navController.navigate("menuDetail/${menu.name}")
+                                        }
+                                    )
                                 }
+                            }
+                        } else {
+                            Text(
+                                text = "Tidak ada menu yang ditemukan",
+                                color = MaterialTheme.colorScheme.secondary,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp)
+                                    .wrapContentWidth(Alignment.CenterHorizontally)
                             )
                         }
                     }
-                } else {
-                    Text(
-                        text = "Tidak ada menu yang ditemukan",
-                        color = MaterialTheme.colorScheme.secondary,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(8.dp)
-                    )
                 }
             }
         }
@@ -142,7 +172,7 @@ fun SearchBar(
         placeholder = {
             Text(
                 text = "Cari makanan, minuman",
-                color = MaterialTheme.colorScheme.secondary, // Light gray placeholder text
+                color = MaterialTheme.colorScheme.secondary,
                 style = MaterialTheme.typography.bodyLarge
             )
         },
@@ -150,39 +180,39 @@ fun SearchBar(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Search Icon",
-                tint = MaterialTheme.colorScheme.secondary // Light gray icon
+                tint = MaterialTheme.colorScheme.secondary
             )
         },
         modifier = modifier
             .fillMaxWidth()
-            .shadow(2.dp, shape = RoundedCornerShape(12.dp)) // Subtle shadow for elevation
+            .shadow(2.dp, shape = RoundedCornerShape(12.dp))
             .background(
-                color = MaterialTheme.colorScheme.surface, // Light background
-                shape = RoundedCornerShape(12.dp) // Rounded corners
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(12.dp)
             ),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surface,
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            focusedIndicatorColor = Color.Transparent, // Remove underline
-            unfocusedIndicatorColor = Color.Transparent, // Remove underline
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
             cursorColor = MaterialTheme.colorScheme.primary
         ),
-        shape = RoundedCornerShape(12.dp), // Rounded corners for the TextField
+        shape = RoundedCornerShape(12.dp),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
     )
 }
 
 @Composable
-fun CategoryCard(category: String, icon: @Composable () -> Unit) {
+fun CategoryCard(category: String, onClick: () -> Unit, icon: @Composable () -> Unit) {
     Card(
         modifier = Modifier
-            .clickable { /* Tambahkan logika filter kategori */ }
-            .shadow(2.dp, shape = RoundedCornerShape(12.dp)), // Subtle shadow for elevation
+            .clickable { onClick() }
+            .shadow(2.dp, shape = RoundedCornerShape(12.dp)),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface, // Light background
+            containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        shape = RoundedCornerShape(12.dp) // Rounded corners
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier
@@ -190,19 +220,15 @@ fun CategoryCard(category: String, icon: @Composable () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Icon
             Box(
                 modifier = Modifier
-                    .size(48.dp) // Enlarge the icon
+                    .size(48.dp)
             ) {
                 icon()
             }
-            // Text below the icon
             Text(
                 text = category,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Bold // Bold text
-                ),
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -214,28 +240,26 @@ fun CategoryCard(category: String, icon: @Composable () -> Unit) {
 fun MenuCard(menu: MenuWithTenantName, onClick: () -> Unit) {
     Card(
         modifier = Modifier
-            .clickable { onClick() } // Make the card clickable
-            .shadow(2.dp, shape = RoundedCornerShape(12.dp)) // Subtle shadow for elevation
-            .fillMaxWidth(), // Ensure the card takes the full width of its grid cell
+            .clickable { onClick() }
+            .shadow(2.dp, shape = RoundedCornerShape(12.dp))
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface, // Light background
+            containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        shape = RoundedCornerShape(12.dp) // Rounded corners
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Placeholder for the image (since it will come from the database later)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp) // Approximate height for the image
-                    .background(Color.LightGray, shape = RoundedCornerShape(8.dp)) // Placeholder background
+                    .height(120.dp)
+                    .background(Color.LightGray, shape = RoundedCornerShape(8.dp))
             ) {
-                // You can add a placeholder icon or text here if desired
                 Text(
                     text = "Image Placeholder",
                     color = Color.Gray,
@@ -243,60 +267,12 @@ fun MenuCard(menu: MenuWithTenantName, onClick: () -> Unit) {
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
-            // Menu name below the image
             Text(
                 text = menu.name,
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(top = 8.dp)
             )
-        }
-    }
-}
-
-@Composable
-fun MenuItem(menu: MenuWithTenantName, onAddClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = menu.name,
-                    style = MaterialTheme.typography.titleLarge, // Menggunakan titleLarge (Raleway Bold, 18.sp)
-                )
-                Text(
-                    text = menu.tenantName,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Text(
-                    text = "Rp ${menu.price}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-            Button(
-                onClick = onAddClick,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Text(
-                    text = "Tambah",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
         }
     }
 }

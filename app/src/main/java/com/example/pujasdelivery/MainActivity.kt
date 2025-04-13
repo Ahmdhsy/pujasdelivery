@@ -14,8 +14,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -72,10 +70,6 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
             }
             composable("profile") {
                 Text("Profile Screen", modifier = Modifier.padding(16.dp))
-            }
-            composable("menuDetail/{menuName}") { backStackEntry ->
-                val menuName = backStackEntry.arguments?.getString("menuName") ?: ""
-                Text("Menu Detail Screen for $menuName", modifier = Modifier.padding(16.dp))
             }
         }
     }
