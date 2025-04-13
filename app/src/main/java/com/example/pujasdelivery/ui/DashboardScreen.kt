@@ -86,7 +86,6 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostControl
             }
         }
 
-        // Daftar Tenant
         if (tenants.isNotEmpty()) {
             Text(
                 text = "Tenant",
@@ -117,7 +116,6 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostControl
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Batasan antara Tenant dan Menu
         Text(
             text = "Menu",
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
@@ -125,7 +123,6 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostControl
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        // Daftar Menu
         when (loadingState) {
             DashboardViewModel.LoadingState.Loading -> {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -167,11 +164,7 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostControl
 }
 
 @Composable
-fun SearchBar(
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun SearchBar(searchQuery: String, onSearchQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
     TextField(
         value = searchQuery,
         onValueChange = onSearchQueryChange,
@@ -225,9 +218,7 @@ fun CategoryCard(category: String, icon: @Composable () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Box(modifier = Modifier.size(48.dp)) {
-                icon()
-            }
+            Box(modifier = Modifier.size(48.dp)) { icon() }
             Text(
                 text = category,
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
@@ -283,7 +274,8 @@ fun TenantCard(name: String, description: String?, imageUrl: String?, onClick: (
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(2.dp, shape = RoundedCornerShape(12.dp)),
+            .shadow(2.dp, shape = RoundedCornerShape(12.dp))
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface

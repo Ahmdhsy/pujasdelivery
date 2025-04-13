@@ -19,4 +19,7 @@ interface TenantDao {
 
     @Query("SELECT * FROM tenants")
     fun getAllTenantsLiveData(): LiveData<List<Tenant>>
+
+    @Query("SELECT * FROM tenants WHERE id = :tenantId")
+    suspend fun getTenantById(tenantId: Int): Tenant
 }

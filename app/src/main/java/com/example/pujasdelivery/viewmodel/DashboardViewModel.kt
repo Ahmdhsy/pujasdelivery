@@ -38,18 +38,8 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 val existingTenants = tenantDao.getAllTenants()
                 if (existingTenants.isEmpty()) {
                     val tenantList = listOf(
-                        Tenant(
-                            id = 0,
-                            name = "Warung XX",
-                            description = "Warung makanan khas XX",
-                            imageURL = "https://example.com/imageXX.jpg"
-                        ),
-                        Tenant(
-                            id = 0,
-                            name = "Warung YY",
-                            description = "Warung makanan khas YY",
-                            imageURL = "https://example.com/imageYY.jpg"
-                        )
+                        Tenant(id = 0, name = "Warung XX"),
+                        Tenant(id = 0, name = "Warung YY")
                     )
                     val insertedTenantIds = tenantDao.insertAll(*tenantList.toTypedArray())
 
