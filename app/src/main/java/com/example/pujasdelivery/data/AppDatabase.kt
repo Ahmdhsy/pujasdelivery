@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.example.pujasdelivery.data.dao.TenantDao
 import com.example.pujasdelivery.data.dao.MenuDao
 
-@Database(entities = [Tenant::class, Menu::class], version = 1)
+@Database(entities = [Tenant::class, Menu::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun tenantDao(): TenantDao
     abstract fun menuDao(): MenuDao
@@ -22,7 +22,8 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "pujas_database"
-                ).build()
+                ).fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

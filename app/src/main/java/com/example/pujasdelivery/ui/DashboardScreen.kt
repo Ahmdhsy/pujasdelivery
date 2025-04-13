@@ -1,5 +1,7 @@
 package com.example.pujasdelivery.ui
 
+import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,28 +22,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.compose.rememberAsyncImagePainter
+import com.example.pujasdelivery.R
 import com.example.pujasdelivery.data.MenuWithTenantName
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
 
 @Composable
 fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostController) {
     val menus by viewModel.menus.observeAsState(initial = emptyList())
+    val tenants by viewModel.tenants.observeAsState(initial = emptyList())
     val loadingState by viewModel.loadingState.observeAsState(initial = DashboardViewModel.LoadingState.Idle)
     var searchQuery by remember { mutableStateOf("") }
 
-    // Filter menu berdasarkan query pencarian
     val filteredMenus = menus.filter {
         it.name.contains(searchQuery, ignoreCase = true) ||
                 it.description.contains(searchQuery, ignoreCase = true)
     }
 
     Column(modifier = Modifier.padding(16.dp)) {
-        // Header
         Text(
             text = "Temukan makanan dan minuman yang ingin Anda pesan di Pujasera POLBAN!",
             style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
@@ -49,14 +54,12 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostControl
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Kolom Pencarian
         SearchBar(
             searchQuery = searchQuery,
             onSearchQueryChange = { searchQuery = it },
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Kategori (tanpa judul "Kategori")
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -83,12 +86,49 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostControl
             }
         }
 
-        // Daftar Menu (tanpa judul "Menu")
+        // Daftar Tenant
+        if (tenants.isNotEmpty()) {
+            Text(
+                text = "Tenant",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 300.dp)
+            ) {
+                items(tenants) { tenant ->
+                    TenantCard(
+                        name = tenant.name,
+                        description = tenant.description,
+                        imageUrl = tenant.imageURL,
+                        onClick = {
+                            Log.d("DashboardScreen", "Tenant ${tenant.name} diklik")
+                            navController.navigate("tenantDesc/${tenant.name}")
+                        }
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // Batasan antara Tenant dan Menu
+        Text(
+            text = "Menu",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        // Daftar Menu
         when (loadingState) {
             DashboardViewModel.LoadingState.Loading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             }
             DashboardViewModel.LoadingState.Error -> {
                 Text(
@@ -108,13 +148,9 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostControl
                             .weight(1f)
                     ) {
                         items(filteredMenus) { menu ->
-                            MenuCard(
-                                menu = menu,
-                                onClick = {
-                                    // Navigate to a detail screen for this menu
-                                    navController.navigate("menuDetail/${menu.name}")
-                                }
-                            )
+                            MenuCard(menu = menu) {
+                                navController.navigate("menuDetail/${menu.name}")
+                            }
                         }
                     }
                 } else {
@@ -142,7 +178,7 @@ fun SearchBar(
         placeholder = {
             Text(
                 text = "Cari makanan, minuman",
-                color = MaterialTheme.colorScheme.secondary, // Light gray placeholder text
+                color = MaterialTheme.colorScheme.secondary,
                 style = MaterialTheme.typography.bodyLarge
             )
         },
@@ -150,24 +186,24 @@ fun SearchBar(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Search Icon",
-                tint = MaterialTheme.colorScheme.secondary // Light gray icon
+                tint = MaterialTheme.colorScheme.secondary
             )
         },
         modifier = modifier
             .fillMaxWidth()
-            .shadow(2.dp, shape = RoundedCornerShape(12.dp)) // Subtle shadow for elevation
+            .shadow(2.dp, shape = RoundedCornerShape(12.dp))
             .background(
-                color = MaterialTheme.colorScheme.surface, // Light background
-                shape = RoundedCornerShape(12.dp) // Rounded corners
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(12.dp)
             ),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surface,
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            focusedIndicatorColor = Color.Transparent, // Remove underline
-            unfocusedIndicatorColor = Color.Transparent, // Remove underline
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
             cursorColor = MaterialTheme.colorScheme.primary
         ),
-        shape = RoundedCornerShape(12.dp), // Rounded corners for the TextField
+        shape = RoundedCornerShape(12.dp),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
     )
 }
@@ -177,32 +213,24 @@ fun CategoryCard(category: String, icon: @Composable () -> Unit) {
     Card(
         modifier = Modifier
             .clickable { /* Tambahkan logika filter kategori */ }
-            .shadow(2.dp, shape = RoundedCornerShape(12.dp)), // Subtle shadow for elevation
+            .shadow(2.dp, shape = RoundedCornerShape(12.dp)),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface, // Light background
+            containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        shape = RoundedCornerShape(12.dp) // Rounded corners
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
-            modifier = Modifier
-                .padding(16.dp),
+            modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Icon
-            Box(
-                modifier = Modifier
-                    .size(48.dp) // Enlarge the icon
-            ) {
+            Box(modifier = Modifier.size(48.dp)) {
                 icon()
             }
-            // Text below the icon
             Text(
                 text = category,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Bold // Bold text
-                ),
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -214,28 +242,25 @@ fun CategoryCard(category: String, icon: @Composable () -> Unit) {
 fun MenuCard(menu: MenuWithTenantName, onClick: () -> Unit) {
     Card(
         modifier = Modifier
-            .clickable { onClick() } // Make the card clickable
-            .shadow(2.dp, shape = RoundedCornerShape(12.dp)) // Subtle shadow for elevation
-            .fillMaxWidth(), // Ensure the card takes the full width of its grid cell
+            .clickable { onClick() }
+            .shadow(2.dp, shape = RoundedCornerShape(12.dp))
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface, // Light background
+            containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        shape = RoundedCornerShape(12.dp) // Rounded corners
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
-            modifier = Modifier
-                .padding(8.dp),
+            modifier = Modifier.padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Placeholder for the image (since it will come from the database later)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp) // Approximate height for the image
-                    .background(Color.LightGray, shape = RoundedCornerShape(8.dp)) // Placeholder background
+                    .height(120.dp)
+                    .background(Color.LightGray, shape = RoundedCornerShape(8.dp))
             ) {
-                // You can add a placeholder icon or text here if desired
                 Text(
                     text = "Image Placeholder",
                     color = Color.Gray,
@@ -243,7 +268,6 @@ fun MenuCard(menu: MenuWithTenantName, onClick: () -> Unit) {
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
-            // Menu name below the image
             Text(
                 text = menu.name,
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
@@ -255,48 +279,55 @@ fun MenuCard(menu: MenuWithTenantName, onClick: () -> Unit) {
 }
 
 @Composable
-fun MenuItem(menu: MenuWithTenantName, onAddClick: () -> Unit) {
+fun TenantCard(name: String, description: String?, imageUrl: String?, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(2.dp, shape = RoundedCornerShape(12.dp)),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
-        )
+        ),
+        shape = RoundedCornerShape(12.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = menu.name,
-                    style = MaterialTheme.typography.titleLarge, // Menggunakan titleLarge (Raleway Bold, 18.sp)
-                )
-                Text(
-                    text = menu.tenantName,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Text(
-                    text = "Rp ${menu.price}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-            Button(
-                onClick = onAddClick,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.LightGray)
             ) {
-                Text(
-                    text = "Tambah",
-                    style = MaterialTheme.typography.bodyLarge
+                val painter = rememberAsyncImagePainter(
+                    model = imageUrl,
+                    placeholder = painterResource(R.drawable.pujas),
+                    error = painterResource(R.drawable.pujas)
+                )
+                Image(
+                    painter = painter,
+                    contentDescription = "Tenant Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = name,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = description ?: "Deskripsi belum tersedia",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
         }
     }
 }

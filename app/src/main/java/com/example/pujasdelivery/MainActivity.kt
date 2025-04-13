@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +30,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.pujasdelivery.ui.DashboardScreen
 import com.example.pujasdelivery.ui.theme.*
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
+import com.example.pujasdelivery.ui.screens.TenantDescScreen
+import com.example.pujasdelivery.data.Tenant
 
 class MainActivity : ComponentActivity() {
     private val viewModel: DashboardViewModel by viewModels()
@@ -51,6 +54,9 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewModel) {
+    // Mengobservasi data tenant dari ViewModel
+    val tenants by viewModel.tenants.observeAsState(initial = emptyList())
+
     Scaffold(
         bottomBar = {
             BottomNavigationBar(navController)
@@ -76,6 +82,14 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
             composable("menuDetail/{menuName}") { backStackEntry ->
                 val menuName = backStackEntry.arguments?.getString("menuName") ?: ""
                 Text("Menu Detail Screen for $menuName", modifier = Modifier.padding(16.dp))
+            }
+            composable("tenantDesc/{tenantName}") { backStackEntry ->
+                val tenantName = backStackEntry.arguments?.getString("tenantName")
+                TenantDescScreen(
+                    tenantName = tenantName,
+                    navController = navController,
+                    tenants = tenants
+                )
             }
         }
     }
