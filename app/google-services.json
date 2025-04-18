@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "299732693810",
+    "project_id": "pujasdelivery",
+    "storage_bucket": "pujasdelivery.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:299732693810:android:df6d0e88567dbfc4b19d2b",
+        "android_client_info": {
+          "package_name": "com.example.pujasdelivery"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWK4liOe35uHl4KvpbZ1vCFTTvR5VWrfo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
