@@ -35,6 +35,17 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             try {
                 _loadingState.value = LoadingState.Loading
 
+                // Check if data is inconsistent (e.g., "Es Teh" has wrong category)
+                val allMenus = menuDao.getAllMenusWithTenantName()
+                val esTeh = allMenus.find { it.name == "Es Teh" }
+                val needsReinitialization = esTeh == null || esTeh.category != "Minuman"
+
+                if (needsReinitialization) {
+                    // Clear the database
+                    tenantDao.deleteAll()
+                    menuDao.deleteAll()
+                }
+
                 val existingTenants = tenantDao.getAllTenants()
                 if (existingTenants.isEmpty()) {
                     val tenantList = listOf(
@@ -49,46 +60,50 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                             tenantId = insertedTenantIds[0].toInt(),
                             name = "Mie Ayam",
                             price = 15000,
-                            description = "Mie ayam gurih"
+                            description = "Mie ayam gurih",
+                            category = "Makanan"
                         ),
                         Menu(
                             id = 0,
                             tenantId = insertedTenantIds[0].toInt(),
                             name = "Es Teh",
                             price = 5000,
-                            description = "Es teh manis"
+                            description = "Es teh manis",
+                            category = "Minuman"
                         ),
                         Menu(
                             id = 0,
                             tenantId = insertedTenantIds[1].toInt(),
-                            name = "Mie Ayam", // Mie Ayam juga ada di Warung YY
+                            name = "Mie Ayam",
                             price = 16000,
-                            description = "Mie ayam spesial"
+                            description = "Mie ayam spesial",
+                            category = "Makanan"
                         ),
                         Menu(
                             id = 0,
                             tenantId = insertedTenantIds[1].toInt(),
                             name = "Nasi Goreng",
                             price = 20000,
-                            description = "Nasi goreng spesial"
+                            description = "Nasi goreng spesial",
+                            category = "Makanan"
                         ),
                         Menu(
                             id = 0,
                             tenantId = insertedTenantIds[0].toInt(),
                             name = "Nasi Ayam",
                             price = 18000,
-                            description = "Nasi dengan ayam goreng"
+                            description = "Nasi dengan ayam goreng",
+                            category = "Makanan"
                         )
                     )
                     menuDao.insertAll(*menuList.toTypedArray())
                 }
 
-                // Ambil semua menu dari semua tenant
                 loadAllMenus()
-
                 _loadingState.value = LoadingState.Success
             } catch (e: Exception) {
                 _loadingState.value = LoadingState.Error
+                println("Error initializing data: ${e.message}")
             }
         }
     }
@@ -98,15 +113,18 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             try {
                 _loadingState.value = LoadingState.Loading
                 val allMenus = menuDao.getAllMenusWithTenantName()
+                allMenus.forEach { menu ->
+                    println("Menu: ${menu.name}, Category: ${menu.category}, Tenant: ${menu.tenantName}")
+                }
                 _menus.value = allMenus
                 _loadingState.value = LoadingState.Success
             } catch (e: Exception) {
                 _loadingState.value = LoadingState.Error
+                println("Error loading menus: ${e.message}")
             }
         }
     }
 
-    // Fungsi ini tetap ada jika diperlukan untuk kasus lain
     fun loadMenusForTenant(tenantId: Int) {
         viewModelScope.launch {
             try {

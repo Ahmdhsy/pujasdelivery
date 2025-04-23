@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -24,6 +25,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.pujasdelivery.data.AppDatabase
+import com.example.pujasdelivery.ui.CategoryScreen
 import com.example.pujasdelivery.ui.DashboardScreen
 import com.example.pujasdelivery.ui.theme.*
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
@@ -33,6 +36,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Clear the database (for development purposes only)
+        AppDatabase.clearDatabase(applicationContext)
+
         setContent {
             val navController = rememberNavController()
             PujasDeliveryTheme {
@@ -71,6 +77,40 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
             composable("profile") {
                 Text("Profile Screen", modifier = Modifier.padding(16.dp))
             }
+            composable("category/{category}") { backStackEntry ->
+                val category = backStackEntry.arguments?.getString("category") ?: "Makanan"
+                CategoryScreen(category = category, viewModel = viewModel, navController = navController)
+            }
+            composable("menuDetail/{menuName}") { backStackEntry ->
+                val menuName = backStackEntry.arguments?.getString("menuName") ?: ""
+                Text("Menu Detail for $menuName (To be implemented)", modifier = Modifier.padding(16.dp))
+            }
+            composable("checkout") {
+                CheckoutScreen(navController = navController)
+            }
+        }
+    }
+}
+
+@Composable
+fun CheckoutScreen(navController: NavHostController) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Checkout Screen",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+        Button(
+            onClick = { navController.popBackStack() },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Back")
         }
     }
 }
@@ -86,10 +126,10 @@ fun BottomNavigationBar(navController: NavHostController) {
 
     NavigationBar(
         modifier = Modifier
-            .padding(horizontal = 12.dp, vertical = 8.dp) // Spacing from sides and bottom
-            .shadow(4.dp, shape = RoundedCornerShape(16.dp)) // Shadow for floating effect
-            .clip(RoundedCornerShape(16.dp)), // Rounded corners
-        containerColor = MaterialTheme.colorScheme.primary, // Background navigasi: PrimaryDarkBlue
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .shadow(4.dp, shape = RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp)),
+        containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary
     ) {
         val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route

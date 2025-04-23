@@ -21,5 +21,6 @@ data class Menu(
     val tenantId: Int,
     val name: String,
     val price: Int,
-    val description: String
+    val description: String,
+    val category: String // Add this field
 )

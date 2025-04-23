@@ -19,4 +19,7 @@ interface TenantDao {
 
     @Query("SELECT * FROM tenants")
     fun getAllTenantsLiveData(): LiveData<List<Tenant>>
+
+    @Query("DELETE FROM tenants")
+    suspend fun deleteAll()
 }
