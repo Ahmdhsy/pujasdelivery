@@ -22,4 +22,7 @@ interface TenantDao {
 
     @Query("DELETE FROM tenants")
     suspend fun deleteAll()
+
+    @Query("SELECT * FROM tenants WHERE id = :tenantId")
+    suspend fun getTenantById(tenantId: Int): Tenant
 }

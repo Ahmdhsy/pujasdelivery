@@ -14,6 +14,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,6 +32,13 @@ import com.example.pujasdelivery.ui.CategoryScreen
 import com.example.pujasdelivery.ui.DashboardScreen
 import com.example.pujasdelivery.ui.theme.*
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
+import com.example.pujasdelivery.ui.screens.TenantDescScreen
+import com.example.pujasdelivery.ui.screens.ProfileScreen
+import com.example.pujasdelivery.ui.screens.EditProfileScreen
+import com.example.pujasdelivery.ui.screens.ChatScreen
+import com.example.pujasdelivery.ui.screens.ChatDetailScreen
+import com.example.pujasdelivery.ui.screens.OrdersScreen
+import com.example.pujasdelivery.data.Tenant
 
 class MainActivity : ComponentActivity() {
     private val viewModel: DashboardViewModel by viewModels()
@@ -55,6 +64,9 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewModel) {
+    val tenants by viewModel.tenants.observeAsState(initial = emptyList())
+    val menus by viewModel.menus.observeAsState(initial = emptyList())
+
     Scaffold(
         bottomBar = {
             BottomNavigationBar(navController)
@@ -69,13 +81,20 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                 DashboardScreen(viewModel, navController)
             }
             composable("orders") {
-                Text("Orders Screen", modifier = Modifier.padding(16.dp))
+                OrdersScreen(navController)
             }
             composable("chat") {
-                Text("Chat Screen", modifier = Modifier.padding(16.dp))
+                ChatScreen(navController)
             }
             composable("profile") {
-                Text("Profile Screen", modifier = Modifier.padding(16.dp))
+                ProfileScreen(navController)
+            }
+            composable("editProfile") {
+                EditProfileScreen(navController)
+            }
+            composable("chatDetail/{contactName}") { backStackEntry ->
+                val contactName = backStackEntry.arguments?.getString("contactName") ?: ""
+                ChatDetailScreen(navController, contactName)
             }
             composable("category/{category}") { backStackEntry ->
                 val category = backStackEntry.arguments?.getString("category") ?: "Makanan"
@@ -87,6 +106,15 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
             }
             composable("checkout") {
                 CheckoutScreen(navController = navController)
+            }
+            composable("tenantDesc/{tenantName}") { backStackEntry ->
+                val tenantName = backStackEntry.arguments?.getString("tenantName")
+                TenantDescScreen(
+                    tenantName = tenantName,
+                    navController = navController,
+                    tenants = tenants,
+                    menus = menus
+                )
             }
         }
     }
