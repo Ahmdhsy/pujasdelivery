@@ -1,6 +1,5 @@
-package com.example.pujasdelivery.ui
+package com.example.pujasdelivery.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,11 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.pujasdelivery.data.MenuWithTenantName
+import com.example.pujasdelivery.ui.SearchBar
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
 
 @Composable
-fun CategoryScreen(
-    category: String,
+fun MenuDetailScreen(
+    menuName: String,
     viewModel: DashboardViewModel,
     navController: NavHostController
 ) {
@@ -37,13 +37,14 @@ fun CategoryScreen(
     val loadingState by viewModel.loadingState.observeAsState(initial = DashboardViewModel.LoadingState.Idle)
     val totalItemCount by viewModel.totalItemCount.observeAsState(initial = 0)
     val totalPrice by viewModel.totalPrice.observeAsState(initial = 0)
+    var searchQuery by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 16.dp)
     ) {
-        // Header with back button and category title
+        // Header with back button and menu name
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -64,7 +65,7 @@ fun CategoryScreen(
                 )
             }
             Text(
-                text = category,
+                text = menuName,
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
@@ -76,10 +77,10 @@ fun CategoryScreen(
             Spacer(modifier = Modifier.size(40.dp)) // Placeholder for symmetry
         }
 
-        // Search bar (reusing the one from DashboardScreen)
+        // Search bar (now functional)
         SearchBar(
-            searchQuery = "",
-            onSearchQueryChange = {},
+            searchQuery = searchQuery,
+            onSearchQueryChange = { searchQuery = it },
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
@@ -104,21 +105,27 @@ fun CategoryScreen(
                 )
             }
             else -> {
-                // Log all menus before filtering
-                println("All Menus: ${menus.map { "${it.name} (${it.category})" }}")
-
-                // Filter menus based on the category (case-insensitive)
-                val filteredMenus = menus.filter { menu ->
-                    menu.category.equals(category, ignoreCase = true)
+                // First filter by menuName
+                val filteredByMenuName = menus.filter { menu ->
+                    menu.name.equals(menuName, ignoreCase = true)
                 }
 
-                // Log the filtered menus
-                println("Category: $category, Filtered Menus: ${filteredMenus.map { it.name }}")
+                // Then filter by searchQuery (name, category, tenantName)
+                val filteredMenus = filteredByMenuName.filter { menu ->
+                    val query = searchQuery.trim().lowercase()
+                    menu.name.lowercase().contains(query) ||
+                            menu.category.lowercase().contains(query) ||
+                            (menu.tenantName?.lowercase()?.contains(query) ?: false)
+                }
 
                 // Check if filteredMenus is empty and display a message if it is
                 if (filteredMenus.isEmpty()) {
                     Text(
-                        text = "Tidak ada menu di kategori $category",
+                        text = if (searchQuery.isEmpty()) {
+                            "Tidak ada menu ditemukan untuk $menuName"
+                        } else {
+                            "Tidak ada hasil untuk \"$searchQuery\" di $menuName"
+                        },
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier
@@ -133,7 +140,7 @@ fun CategoryScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(filteredMenus) { menu ->
-                            CategoryMenuCard(
+                            MenuDetailCard(
                                 menu = menu,
                                 viewModel = viewModel, // Pass the viewModel
                                 onAddClick = { viewModel.addToCart(menu) },
@@ -166,8 +173,7 @@ fun CategoryScreen(
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(
                 onClick = { navController.navigate("checkout") },
-                modifier = Modifier
-                    .size(40.dp)
+                modifier = Modifier.size(40.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.ShoppingCart,
@@ -181,7 +187,7 @@ fun CategoryScreen(
 }
 
 @Composable
-fun CategoryMenuCard(
+fun MenuDetailCard(
     menu: MenuWithTenantName,
     viewModel: DashboardViewModel, // Add viewModel parameter
     onAddClick: () -> Unit,
@@ -192,7 +198,7 @@ fun CategoryMenuCard(
     val itemCount = cartItems.find { it.menuId == menu.id && it.tenantName == menu.tenantName }?.quantity ?: 0
 
     // Log to confirm the card is being rendered
-    println("Rendering CategoryMenuCard for: ${menu.name}, Quantity in cart: $itemCount")
+    println("Rendering MenuDetailCard for: ${menu.name}, Quantity in cart: $itemCount")
 
     Card(
         modifier = Modifier

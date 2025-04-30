@@ -38,7 +38,8 @@ import com.example.pujasdelivery.ui.screens.EditProfileScreen
 import com.example.pujasdelivery.ui.screens.ChatScreen
 import com.example.pujasdelivery.ui.screens.ChatDetailScreen
 import com.example.pujasdelivery.ui.screens.OrdersScreen
-import com.example.pujasdelivery.data.Tenant
+import com.example.pujasdelivery.ui.screens.MenuDetailScreen
+import com.example.pujasdelivery.ui.screens.CheckoutScreen
 
 class MainActivity : ComponentActivity() {
     private val viewModel: DashboardViewModel by viewModels()
@@ -66,10 +67,13 @@ class MainActivity : ComponentActivity() {
 fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewModel) {
     val tenants by viewModel.tenants.observeAsState(initial = emptyList())
     val menus by viewModel.menus.observeAsState(initial = emptyList())
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
     Scaffold(
         bottomBar = {
-            BottomNavigationBar(navController)
+            if (currentRoute != "checkout") { // Hide navbar for CheckoutScreen
+                BottomNavigationBar(navController)
+            }
         }
     ) { innerPadding ->
         NavHost(
@@ -102,10 +106,17 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
             }
             composable("menuDetail/{menuName}") { backStackEntry ->
                 val menuName = backStackEntry.arguments?.getString("menuName") ?: ""
-                Text("Menu Detail for $menuName (To be implemented)", modifier = Modifier.padding(16.dp))
+                MenuDetailScreen(
+                    menuName = menuName,
+                    viewModel = viewModel,
+                    navController = navController
+                )
             }
             composable("checkout") {
-                CheckoutScreen(navController = navController)
+                CheckoutScreen(
+                    navController = navController,
+                    viewModel = viewModel
+                )
             }
             composable("tenantDesc/{tenantName}") { backStackEntry ->
                 val tenantName = backStackEntry.arguments?.getString("tenantName")
@@ -116,29 +127,6 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                     menus = menus
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun CheckoutScreen(navController: NavHostController) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Checkout Screen",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        Button(
-            onClick = { navController.popBackStack() },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Back")
         }
     }
 }

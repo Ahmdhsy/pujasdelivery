@@ -6,13 +6,15 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.example.pujasdelivery.data.dao.TenantDao
+import com.example.pujasdelivery.data.dao.CartDao
 import com.example.pujasdelivery.data.dao.MenuDao
+import com.example.pujasdelivery.data.dao.TenantDao
 
-@Database(entities = [Tenant::class, Menu::class], version = 2)
+@Database(entities = [Tenant::class, Menu::class, CartItem::class], version = 4) // Increment version to 4
 abstract class AppDatabase : RoomDatabase() {
     abstract fun tenantDao(): TenantDao
     abstract fun menuDao(): MenuDao
+    abstract fun cartDao(): CartDao
 
     companion object {
         @Volatile
@@ -25,6 +27,51 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS cart_items (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        menuId INTEGER NOT NULL,
+                        menuName TEXT NOT NULL,
+                        tenantName TEXT,
+                        price INTEGER NOT NULL,
+                        quantity INTEGER NOT NULL
+                    )
+                """.trimIndent())
+            }
+        }
+
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Create a new table with the tenantId column
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS cart_items_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        menuId INTEGER NOT NULL,
+                        menuName TEXT NOT NULL,
+                        tenantId INTEGER NOT NULL,
+                        tenantName TEXT,
+                        price INTEGER NOT NULL,
+                        quantity INTEGER NOT NULL
+                    )
+                """.trimIndent())
+
+                // Copy data from the old table to the new table, setting tenantId to 0 (or a default value)
+                database.execSQL("""
+                    INSERT INTO cart_items_new (id, menuId, menuName, tenantName, price, quantity, tenantId)
+                    SELECT id, menuId, menuName, tenantName, price, quantity, 0
+                    FROM cart_items
+                """.trimIndent())
+
+                // Drop the old table
+                database.execSQL("DROP TABLE cart_items")
+
+                // Rename the new table to the original name
+                database.execSQL("ALTER TABLE cart_items_new RENAME TO cart_items")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -32,7 +79,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "pujas_database"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4) // Add the new migration
                     .build()
                 INSTANCE = instance
                 instance
