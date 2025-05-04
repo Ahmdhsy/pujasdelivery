@@ -1,6 +1,7 @@
 package com.example.pujasdelivery
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -40,22 +41,20 @@ import com.example.pujasdelivery.ui.screens.ChatDetailScreen
 import com.example.pujasdelivery.ui.screens.OrdersScreen
 import com.example.pujasdelivery.ui.screens.MenuDetailScreen
 import com.example.pujasdelivery.ui.screens.CheckoutScreen
+import com.example.pujasdelivery.ui.screens.PaymentScreen
+import com.example.pujasdelivery.ui.screens.OrderConfirmationScreen
 
 class MainActivity : ComponentActivity() {
     private val viewModel: DashboardViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Clear the database (for development purposes only)
         AppDatabase.clearDatabase(applicationContext)
 
         setContent {
             val navController = rememberNavController()
             PujasDeliveryTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     NavigationSetup(navController, viewModel)
                 }
             }
@@ -65,13 +64,12 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewModel) {
-    val tenants by viewModel.tenants.observeAsState(initial = emptyList())
-    val menus by viewModel.menus.observeAsState(initial = emptyList())
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
     Scaffold(
         bottomBar = {
-            if (currentRoute != "checkout") { // Hide navbar for CheckoutScreen
+            if (currentRoute != null && !currentRoute.startsWith("checkout") &&
+                !currentRoute.startsWith("payment") && !currentRoute.startsWith("orderConfirmation")) {
                 BottomNavigationBar(navController)
             }
         }
@@ -118,13 +116,34 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                     viewModel = viewModel
                 )
             }
-            composable("tenantDesc/{tenantName}") { backStackEntry ->
+            composable("payment") {
+                PaymentScreen(
+                    navController = navController,
+                    viewModel = viewModel
+                )
+            }
+            composable("orderConfirmation/{orderId}") { backStackEntry ->
+                val orderId = backStackEntry.arguments?.getString("orderId") ?: "1" // Default orderId
+                OrderConfirmationScreen(navController = navController, viewModel = viewModel, orderId = orderId)
+            }
+            composable("orderConfirmation?cancel={cancel}") { backStackEntry ->
+                val cancel = backStackEntry.arguments?.getString("cancel")?.toBoolean() ?: false
+                val orderId = backStackEntry.arguments?.getString("orderId") ?: "1" // Default orderId
+                OrderConfirmationScreen(navController = navController, viewModel = viewModel, orderId = orderId)
+                if (cancel) {
+                    // TODO: Implement cancellation logic here (e.g., update viewModel or database)
+                    Log.d("Cancellation", "Order $orderId cancelled")
+                }
+            }
+            composable("tenantDesc/{tenantName}/{tenantId}") { backStackEntry ->
                 val tenantName = backStackEntry.arguments?.getString("tenantName")
+                val tenantId = backStackEntry.arguments?.getString("tenantId")?.toIntOrNull()
+                Log.d("Navigation", "Navigating to tenantDesc with tenantName: $tenantName, tenantId: $tenantId")
                 TenantDescScreen(
                     tenantName = tenantName,
+                    tenantId = tenantId,
                     navController = navController,
-                    tenants = tenants,
-                    menus = menus
+                    viewModel = viewModel
                 )
             }
         }

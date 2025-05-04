@@ -27,6 +27,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -114,8 +115,8 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostControl
                     )
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp), // Jarak vertikal antar kartu
+                        horizontalArrangement = Arrangement.spacedBy(16.dp), // Jarak horizontal antar kartu
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(max = 300.dp)
@@ -126,12 +127,24 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostControl
                                 description = tenant.description,
                                 imageUrl = tenant.imageURL,
                                 onClick = {
-                                    Log.d("DashboardScreen", "Tenant ${tenant.name} diklik")
-                                    navController.navigate("tenantDesc/${tenant.name}")
+                                    Log.d("DashboardScreen", "Tenant ${tenant.name} diklik, ID: ${tenant.id}")
+                                    navController.navigate("tenantDesc/${tenant.name}/${tenant.id}")
                                 }
                             )
                         }
                     }
+                }
+            } else {
+                item {
+                    Text(
+                        text = "Tidak ada tenant tersedia",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .wrapContentWidth(Alignment.CenterHorizontally)
+                    )
                 }
             }
 
@@ -314,6 +327,7 @@ fun TenantCard(name: String, description: String?, imageUrl: String?, onClick: (
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .height(220.dp) // Tinggi kartu disesuaikan agar lebih proporsional
             .shadow(2.dp, shape = RoundedCornerShape(12.dp))
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
@@ -323,14 +337,19 @@ fun TenantCard(name: String, description: String?, imageUrl: String?, onClick: (
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp), // Padding dikurangi agar lebih rapi
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween // Distribusi elemen secara merata
         ) {
             Box(
                 modifier = Modifier
-                    .size(100.dp)
+                    .fillMaxWidth()
+                    .height(120.dp) // Tinggi gambar disesuaikan
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color.LightGray)
+                    .background(Color.LightGray),
+                contentAlignment = Alignment.Center // Gambar berada di tengah
             ) {
                 val painter = rememberAsyncImagePainter(
                     model = imageUrl,
@@ -349,16 +368,23 @@ fun TenantCard(name: String, description: String?, imageUrl: String?, onClick: (
 
             Text(
                 text = name,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                ),
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
                 text = description ?: "Deskripsi belum tersedia",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.secondary
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                color = MaterialTheme.colorScheme.secondary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

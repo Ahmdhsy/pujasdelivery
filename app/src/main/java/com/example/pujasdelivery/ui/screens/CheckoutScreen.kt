@@ -10,13 +10,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,8 +80,9 @@ fun CheckoutScreen(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(4.dp, shape = RoundedCornerShape(0.dp)),
-            shape = RoundedCornerShape(0.dp),
+                .padding(horizontal = 16.dp)
+                .shadow(4.dp, shape = RoundedCornerShape(12.dp)),
+            shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.onSurface
@@ -111,36 +109,20 @@ fun CheckoutScreen(
                     Text(
                         text = "Gedung H",
                         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-                Button(
-                    onClick = {
-                        // TODO: Implement address change functionality
-                    },
+                Text(
+                    text = "Ganti alamat",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, color = MaterialTheme.colorScheme.primary),
                     modifier = Modifier
-                        .width(120.dp)
-                        .height(36.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = "Ganti alamat",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
+                        .clickable { /* TODO: Implement address change */ }
+                        .padding(start = 8.dp)
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp)) // Space below the address card
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Cart items list
         if (cartItems.isEmpty()) {
@@ -163,124 +145,94 @@ fun CheckoutScreen(
                 items(cartItems) { item ->
                     CheckoutItemCard(
                         cartItem = item,
-                        onAddClick = {
-                            viewModel.addToCart(
-                                MenuWithTenantName(
-                                    id = item.menuId,
-                                    tenantId = item.tenantId,
-                                    name = item.menuName,
-                                    tenantName = item.tenantName,
-                                    price = item.price,
-                                    description = "",
-                                    category = ""
-                                )
-                            )
-                        },
-                        onRemoveClick = {
-                            viewModel.removeFromCart(
-                                MenuWithTenantName(
-                                    id = item.menuId,
-                                    tenantId = item.tenantId,
-                                    name = item.menuName,
-                                    tenantName = item.tenantName,
-                                    price = item.price,
-                                    description = "",
-                                    category = ""
-                                )
-                            )
-                        }
+                        onAddClick = { viewModel.addToCart(cartItemToMenuWithTenantName(item)) },
+                        onRemoveClick = { viewModel.removeFromCart(cartItemToMenuWithTenantName(item)) }
                     )
                 }
             }
 
-            // Total Pesanan row in a card
+            // Total Pesanan and Button in a Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
                     .padding(top = 16.dp)
-                    .shadow(4.dp, shape = RoundedCornerShape(0.dp)), // Same shadow as address card
-                shape = RoundedCornerShape(0.dp), // Square card
+                    .shadow(4.dp, shape = RoundedCornerShape(12.dp)),
+                shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface
                 )
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(16.dp)
                 ) {
-                    Text(
-                        text = "Total pesanan (${cartItems.size} menu)",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 16.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    // Price removed as requested
-                }
-            }
-        }
-
-        // Total Pembayaran and Button in a Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            shape = RoundedCornerShape(0.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface
-            )
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Total pembayaran",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text(
-                        text = "Rp. $totalPrice",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = {
-                        viewModel.clearCart()
-                        navController.popBackStack()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Text(
-                        text = "Beli dan antar sekarang",
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Total Pesanan (${cartItems.size} menu)",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "Rp. $totalPrice",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Total pembayaran",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "Rp. $totalPrice",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            navController.navigate("payment")
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text(
+                            text = "Beli dan antar sekarang",
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp)
+                        )
+                    }
                 }
             }
         }
@@ -346,6 +298,7 @@ fun CheckoutItemCard(
                             shape = RoundedCornerShape(4.dp)
                         )
                         .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .clickable { showNotesDialog = true }
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
@@ -360,18 +313,16 @@ fun CheckoutItemCard(
                         Text(
                             text = if (notes.isEmpty()) "Catatan" else notes,
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                            color = if (notes.isEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.clickable {
-                                showNotesDialog = true
-                            }
+                            color = if (notes.isEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
             }
 
-            // Column for image and quantity controls
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+            // Column for image, quantity controls, and delete button
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Image placeholder
                 Box(
@@ -387,8 +338,6 @@ fun CheckoutItemCard(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-
-                Spacer(modifier = Modifier.height(8.dp)) // Space between image and quantity controls
 
                 // Quantity controls
                 Row(
@@ -426,6 +375,21 @@ fun CheckoutItemCard(
                         )
                     }
                 }
+
+                // Delete button
+                IconButton(
+                    onClick = { onRemoveClick() },
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color(0xFFFFA726), shape = RoundedCornerShape(8.dp))
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     }
@@ -459,4 +423,17 @@ fun CheckoutItemCard(
             }
         )
     }
+}
+
+// Helper function
+fun cartItemToMenuWithTenantName(cartItem: CartItem): MenuWithTenantName {
+    return MenuWithTenantName(
+        id = cartItem.menuId,
+        tenantId = cartItem.tenantId,
+        name = cartItem.menuName,
+        price = cartItem.price,
+        description = "", // Default value karena CartItem tidak memiliki description
+        category = "", // Default value karena CartItem tidak memiliki category
+        tenantName = cartItem.tenantName
+    )
 }
