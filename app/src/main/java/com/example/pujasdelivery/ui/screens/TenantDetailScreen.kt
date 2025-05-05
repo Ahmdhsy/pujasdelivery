@@ -5,9 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -112,6 +114,7 @@ fun TenantDescScreen(
                 tenant = tenant,
                 menus = tenantMenus,
                 navController = navController,
+                viewModel = viewModel,
                 modifier = Modifier.padding(paddingValues)
             )
         }
@@ -123,105 +126,175 @@ fun TenantDetailContent(
     tenant: Tenant,
     menus: List<MenuWithTenantName>,
     navController: NavHostController,
+    viewModel: DashboardViewModel,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
+    val totalItemCount by viewModel.totalItemCount.observeAsState(initial = 0)
+    val totalPrice by viewModel.totalPrice.observeAsState(initial = 0)
+
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 16.dp)
-            .background(Color(0xFFE5E5E5)),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .background(Color(0xFFE5E5E5))
     ) {
-        item {
-            // Tenant Image
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.LightGray),
-                contentAlignment = Alignment.Center
-            ) {
-                val painter = rememberAsyncImagePainter(
-                    model = tenant.imageURL,
-                    placeholder = painterResource(R.drawable.pujas),
-                    error = painterResource(R.drawable.pujas)
-                )
-                Image(
-                    painter = painter,
-                    contentDescription = "Gambar Tenant",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+                .padding(bottom = 72.dp), // Add padding to avoid overlap with floating footer
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                // Tenant Image
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.LightGray),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val painter = rememberAsyncImagePainter(
+                        model = tenant.imageURL,
+                        placeholder = painterResource(R.drawable.pujas),
+                        error = painterResource(R.drawable.pujas)
+                    )
+                    Image(
+                        painter = painter,
+                        contentDescription = "Gambar Tenant",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                // Tenant Name
+                Text(
+                    text = tenant.name,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
                 )
             }
 
-            // Tenant Name
-            Text(
-                text = tenant.name,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp)
-            )
+            item {
+                // Tenant Description
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(2.dp, shape = RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Deskripsi",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            ),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = tenant.description ?: "Deskripsi belum tersedia",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                }
+            }
+
+            item {
+                // Judul Menu
+                Text(
+                    text = "Menu Tersedia",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
+            items(menus) { menu ->
+                MenuItemCard(
+                    menu = menu,
+                    viewModel = viewModel,
+                    onAddClick = { viewModel.addToCart(menu) },
+                    onRemoveClick = { viewModel.removeFromCart(menu) }
+                )
+            }
         }
 
-        item {
-            // Tenant Description
-            Card(
+        // Floating footer
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .align(Alignment.BottomCenter)
+                .shadow(4.dp, shape = RoundedCornerShape(12.dp)),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White, // White background
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(2.dp, shape = RoundedCornerShape(12.dp)),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                ),
-                shape = RoundedCornerShape(12.dp)
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Deskripsi",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        ),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = tenant.description ?: "Deskripsi belum tersedia",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                        color = MaterialTheme.colorScheme.onBackground
+                Text(
+                    text = "$totalItemCount Item",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "Rp. $totalPrice",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = { navController.navigate("checkout") },
+                    modifier = Modifier
+                        .size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ShoppingCart,
+                        contentDescription = "Add to Cart",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
-        }
-
-        item {
-            // Judul Menu
-            Text(
-                text = "Menu Tersedia",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                ),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
-
-        items(menus) { menu ->
-            MenuItemCard(menu = menu)
         }
     }
 }
 
 @Composable
-fun MenuItemCard(menu: MenuWithTenantName) {
+fun MenuItemCard(
+    menu: MenuWithTenantName,
+    viewModel: DashboardViewModel,
+    onAddClick: () -> Unit,
+    onRemoveClick: () -> Unit
+) {
+    // Observe the cart items to get the quantity of this specific menu item
+    val cartItems by viewModel.cartItems.observeAsState(initial = emptyList())
+    val itemCount = cartItems.find { it.menuId == menu.id && it.tenantName == menu.tenantName }?.quantity ?: 0
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -232,27 +305,107 @@ fun MenuItemCard(menu: MenuWithTenantName) {
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = menu.name,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                ),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Harga: Rp ${menu.price}",
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = menu.tenantName ?: "Unknown Tenant",
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                color = MaterialTheme.colorScheme.secondary
-            )
+        Row(
+            modifier = Modifier
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Image placeholder with rounded corners
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.LightGray)
+            ) {
+                Text(
+                    text = "Image",
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = menu.name,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = menu.tenantName ?: "Unknown Tenant",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Rp. ${menu.price}",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (itemCount > 0) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .background(
+                                MaterialTheme.colorScheme.primary,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        IconButton(
+                            onClick = { onRemoveClick() },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Text(
+                                text = "-",
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                        Text(
+                            text = "$itemCount",
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                        IconButton(
+                            onClick = { onAddClick() },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Text(
+                                text = "+",
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                } else {
+                    Button(
+                        onClick = { onAddClick() },
+                        modifier = Modifier
+                            .height(30.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text(
+                            text = "Tambah",
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp)
+                        )
+                    }
+                }
+            }
         }
     }
 }

@@ -38,143 +38,163 @@ fun CategoryScreen(
     val totalItemCount by viewModel.totalItemCount.observeAsState(initial = 0)
     val totalPrice by viewModel.totalPrice.observeAsState(initial = 0)
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 16.dp)
     ) {
-        // Header with back button and category title
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
         ) {
-            IconButton(
-                onClick = { navController.popBackStack() },
+            // Header with back button and category title
+            Row(
                 modifier = Modifier
-                    .size(40.dp)
-                    .background(Color.LightGray.copy(alpha = 0.2f), shape = CircleShape)
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            Text(
-                text = category,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.size(40.dp)) // Placeholder for symmetry
-        }
-
-        // Search bar (reusing the one from DashboardScreen)
-        SearchBar(
-            searchQuery = "",
-            onSearchQueryChange = {},
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        // Handle loading state
-        when (loadingState) {
-            DashboardViewModel.LoadingState.Loading -> {
-                CircularProgressIndicator(
+                IconButton(
+                    onClick = { navController.popBackStack() },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .wrapContentWidth(Alignment.CenterHorizontally)
-                )
-            }
-            DashboardViewModel.LoadingState.Error -> {
-                Text(
-                    text = "Terjadi kesalahan saat memuat data",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .wrapContentWidth(Alignment.CenterHorizontally)
-                )
-            }
-            else -> {
-                // Log all menus before filtering
-                println("All Menus: ${menus.map { "${it.name} (${it.category})" }}")
-
-                // Filter menus based on the category (case-insensitive)
-                val filteredMenus = menus.filter { menu ->
-                    menu.category.equals(category, ignoreCase = true)
+                        .size(40.dp)
+                        .background(Color.LightGray.copy(alpha = 0.2f), shape = CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
+                Text(
+                    text = category,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.size(40.dp)) // Placeholder for symmetry
+            }
 
-                // Log the filtered menus
-                println("Category: $category, Filtered Menus: ${filteredMenus.map { it.name }}")
+            // Search bar (reusing the one from DashboardScreen)
+            SearchBar(
+                searchQuery = "",
+                onSearchQueryChange = {},
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
 
-                // Check if filteredMenus is empty and display a message if it is
-                if (filteredMenus.isEmpty()) {
-                    Text(
-                        text = "Tidak ada menu di kategori $category",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.secondary,
+            // Handle loading state
+            when (loadingState) {
+                DashboardViewModel.LoadingState.Loading -> {
+                    CircularProgressIndicator(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp)
                             .wrapContentWidth(Alignment.CenterHorizontally)
                     )
-                } else {
-                    // List of menu items
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(filteredMenus) { menu ->
-                            CategoryMenuCard(
-                                menu = menu,
-                                viewModel = viewModel, // Pass the viewModel
-                                onAddClick = { viewModel.addToCart(menu) },
-                                onRemoveClick = { viewModel.removeFromCart(menu) }
-                            )
+                }
+                DashboardViewModel.LoadingState.Error -> {
+                    Text(
+                        text = "Terjadi kesalahan saat memuat data",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .wrapContentWidth(Alignment.CenterHorizontally)
+                    )
+                }
+                else -> {
+                    // Log all menus before filtering
+                    println("All Menus: ${menus.map { "${it.name} (${it.category})" }}")
+
+                    // Filter menus based on the category (case-insensitive)
+                    val filteredMenus = menus.filter { menu ->
+                        menu.category.equals(category, ignoreCase = true)
+                    }
+
+                    // Log the filtered menus
+                    println("Category: $category, Filtered Menus: ${filteredMenus.map { it.name }}")
+
+                    // Check if filteredMenus is empty and display a message if it is
+                    if (filteredMenus.isEmpty()) {
+                        Text(
+                            text = "Tidak ada menu di kategori $category",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                                .wrapContentWidth(Alignment.CenterHorizontally)
+                        )
+                    } else {
+                        // List of menu items
+                        LazyColumn(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(bottom = 72.dp), // Add padding to avoid overlap with floating footer
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(filteredMenus) { menu ->
+                                CategoryMenuCard(
+                                    menu = menu,
+                                    viewModel = viewModel,
+                                    onAddClick = { viewModel.addToCart(menu) },
+                                    onRemoveClick = { viewModel.removeFromCart(menu) }
+                                )
+                            }
                         }
                     }
                 }
             }
         }
 
-        // Footer with item count, total price, and shopping cart button
-        Row(
+        // Floating footer
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .align(Alignment.BottomCenter)
+                .shadow(4.dp, shape = RoundedCornerShape(12.dp)),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White, // White background
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            Text(
-                text = "$totalItemCount Item",
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = "Rp. $totalPrice",
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = { navController.navigate("checkout") },
+            Row(
                 modifier = Modifier
-                    .size(40.dp)
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.ShoppingCart,
-                    contentDescription = "Add to Cart",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+                Text(
+                    text = "$totalItemCount Item",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground
                 )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "Rp. $totalPrice",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = { navController.navigate("checkout") },
+                    modifier = Modifier
+                        .size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ShoppingCart,
+                        contentDescription = "Add to Cart",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     }
@@ -183,7 +203,7 @@ fun CategoryScreen(
 @Composable
 fun CategoryMenuCard(
     menu: MenuWithTenantName,
-    viewModel: DashboardViewModel, // Add viewModel parameter
+    viewModel: DashboardViewModel,
     onAddClick: () -> Unit,
     onRemoveClick: () -> Unit
 ) {
