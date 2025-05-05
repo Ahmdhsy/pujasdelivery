@@ -10,7 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
@@ -36,8 +35,6 @@ import com.example.pujasdelivery.viewmodel.DashboardViewModel
 import com.example.pujasdelivery.ui.screens.TenantDescScreen
 import com.example.pujasdelivery.ui.screens.ProfileScreen
 import com.example.pujasdelivery.ui.screens.EditProfileScreen
-import com.example.pujasdelivery.ui.screens.ChatScreen
-import com.example.pujasdelivery.ui.screens.ChatDetailScreen
 import com.example.pujasdelivery.ui.screens.OrdersScreen
 import com.example.pujasdelivery.ui.screens.MenuDetailScreen
 import com.example.pujasdelivery.ui.screens.CheckoutScreen
@@ -85,18 +82,11 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
             composable("orders") {
                 OrdersScreen(navController)
             }
-            composable("chat") {
-                ChatScreen(navController)
-            }
             composable("profile") {
                 ProfileScreen(navController)
             }
             composable("editProfile") {
                 EditProfileScreen(navController)
-            }
-            composable("chatDetail/{contactName}") { backStackEntry ->
-                val contactName = backStackEntry.arguments?.getString("contactName") ?: ""
-                ChatDetailScreen(navController, contactName)
             }
             composable("category/{category}") { backStackEntry ->
                 val category = backStackEntry.arguments?.getString("category") ?: "Makanan"
@@ -123,15 +113,14 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                 )
             }
             composable("orderConfirmation/{orderId}") { backStackEntry ->
-                val orderId = backStackEntry.arguments?.getString("orderId") ?: "1" // Default orderId
+                val orderId = backStackEntry.arguments?.getString("orderId") ?: "1"
                 OrderConfirmationScreen(navController = navController, viewModel = viewModel, orderId = orderId)
             }
             composable("orderConfirmation?cancel={cancel}") { backStackEntry ->
                 val cancel = backStackEntry.arguments?.getString("cancel")?.toBoolean() ?: false
-                val orderId = backStackEntry.arguments?.getString("orderId") ?: "1" // Default orderId
+                val orderId = backStackEntry.arguments?.getString("orderId") ?: "1"
                 OrderConfirmationScreen(navController = navController, viewModel = viewModel, orderId = orderId)
                 if (cancel) {
-                    // TODO: Implement cancellation logic here (e.g., update viewModel or database)
                     Log.d("Cancellation", "Order $orderId cancelled")
                 }
             }
@@ -155,7 +144,6 @@ fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
         "Beranda" to Icons.Default.Home,
         "Pesanan" to Icons.Default.ShoppingCart,
-        "Chat" to Icons.Filled.Message,
         "Profil" to Icons.Default.Person
     )
 
@@ -172,7 +160,6 @@ fun BottomNavigationBar(navController: NavHostController) {
             val route = when (title) {
                 "Beranda" -> "dashboard"
                 "Pesanan" -> "orders"
-                "Chat" -> "chat"
                 "Profil" -> "profile"
                 else -> "dashboard"
             }

@@ -10,7 +10,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -319,7 +318,7 @@ fun CheckoutItemCard(
                 }
             }
 
-            // Column for image, quantity controls, and delete button
+            // Column for image and quantity controls
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -374,21 +373,6 @@ fun CheckoutItemCard(
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
-                }
-
-                // Delete button
-                IconButton(
-                    onClick = { onRemoveClick() },
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(Color(0xFFFFA726), shape = RoundedCornerShape(8.dp))
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(24.dp)
-                    )
                 }
             }
         }

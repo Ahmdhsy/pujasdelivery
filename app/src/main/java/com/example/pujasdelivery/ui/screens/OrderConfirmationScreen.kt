@@ -42,34 +42,6 @@ fun OrderConfirmationScreen(
     val courierName = "Budi Kurir" // Data dummy untuk frontend
     val whatsappNumber = "6281234567890" // Data dummy untuk frontend
 
-    // State untuk mengontrol dialog pembatalan
-    var showCancelDialog by remember { mutableStateOf(false) }
-
-    // Dialog konfirmasi pembatalan
-    if (showCancelDialog) {
-        AlertDialog(
-            onDismissRequest = { showCancelDialog = false },
-            title = { Text("Batalkan Pesanan") },
-            text = { Text("Apakah Anda yakin ingin membatalkan pesanan dengan ID $orderId?") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showCancelDialog = false
-                        navController.navigate("dashboard") // Navigasi ke dashboard sebagai placeholder
-                        // TODO: Tambahkan logika pembatalan di sini jika diperlukan
-                    }
-                ) {
-                    Text("Ya")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCancelDialog = false }) {
-                    Text("Tidak")
-                }
-            }
-        )
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -228,7 +200,7 @@ fun OrderConfirmationScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Total Pesanan (${cartItems.size} menu)", // Akses size langsung
+                            text = "Total Pesanan (${cartItems.size} menu)",
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
@@ -249,17 +221,6 @@ fun OrderConfirmationScreen(
                         }
                     }
                 }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-            Button(
-                onClick = { showCancelDialog = true }, // Tampilkan dialog
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5722))
-            ) {
-                Text("Batalkan Pesanan", color = MaterialTheme.colorScheme.onPrimary)
             }
         }
     }
