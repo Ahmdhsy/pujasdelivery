@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun PaymentScreen(
@@ -32,8 +33,10 @@ fun PaymentScreen(
     var showUploadDialog by remember { mutableStateOf(false) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     val totalPrice by viewModel.totalPrice.observeAsState(initial = 0)
+    val savedTotalPrice by remember { mutableStateOf(totalPrice) }
+    val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Launcher untuk memilih gambar dari galeri
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
@@ -46,7 +49,10 @@ fun PaymentScreen(
             .fillMaxSize()
             .padding(vertical = 16.dp)
     ) {
-        // Header with back button and title
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -61,7 +67,7 @@ fun PaymentScreen(
                     .background(Color.LightGray.copy(alpha = 0.2f), shape = CircleShape)
             ) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
                     tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.size(24.dp)
@@ -99,7 +105,6 @@ fun PaymentScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // QR Code placeholder
             Card(
                 modifier = Modifier
                     .size(200.dp)
@@ -123,7 +128,7 @@ fun PaymentScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Total Pembayaran: Rp. $totalPrice",
+                text = "Total Pembayaran: Rp. $savedTotalPrice",
                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp)
             )
 
@@ -139,7 +144,6 @@ fun PaymentScreen(
             }
         }
 
-        // Pop-up dialog untuk unggah bukti pembayaran
         if (showUploadDialog) {
             AlertDialog(
                 onDismissRequest = { showUploadDialog = false },
@@ -193,8 +197,20 @@ fun PaymentScreen(
                 confirmButton = {
                     Button(
                         onClick = {
-                            showUploadDialog = false
-                            navController.navigate("orderConfirmation") // Langsung ke Status Pesanan
+                            if (imageUri != null) {
+                                showUploadDialog = false
+                                coroutineScope.launch {
+                                    val orderId = viewModel.createOrder(imageUri)
+                                    if (orderId != -1L) {
+                                        navController.navigate("orderConfirmation/$orderId") {
+                                            popUpTo("dashboard") { inclusive = false }
+                                            launchSingleTop = true
+                                        }
+                                    } else {
+                                        snackbarHostState.showSnackbar("Gagal membuat pesanan. Silakan coba lagi.")
+                                    }
+                                }
+                            }
                         },
                         enabled = imageUri != null,
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
