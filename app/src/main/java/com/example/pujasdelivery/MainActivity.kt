@@ -42,6 +42,8 @@ import com.example.pujasdelivery.ui.screens.CheckoutScreen
 import com.example.pujasdelivery.ui.screens.PaymentScreen
 import com.example.pujasdelivery.ui.screens.OrderConfirmationScreen
 import com.example.pujasdelivery.ui.courier.CourierOrderScreen
+import com.example.pujasdelivery.ui.courier.OrderDetailScreen
+import com.example.pujasdelivery.ui.courier.ProfileCourierScreen
 
 class MainActivity : ComponentActivity() {
     private val viewModel: DashboardViewModel by viewModels()
@@ -76,7 +78,8 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                     !currentRoute.startsWith("checkout") &&
                             !currentRoute.startsWith("payment") &&
                             !currentRoute.startsWith("orderConfirmation") &&
-                            !currentRoute.startsWith("mode_selection") -> {
+                            !currentRoute.startsWith("mode_selection") &&
+                            !currentRoute.startsWith("orderDetail") -> {
                         BottomNavigationBar(navController)
                     }
                     else -> Unit
@@ -96,7 +99,7 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                 DashboardScreen(viewModel, navController)
             }
             composable("orders") {
-                OrdersScreen(navController, viewModel) // Tambahkan viewModel di sini
+                OrdersScreen(navController, viewModel)
             }
             composable("profile") {
                 ProfileScreen(navController)
@@ -165,8 +168,18 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                     viewModel = viewModel
                 )
             }
+
             composable("courier_profile") {
-                Text("Profil Kurir")
+                ProfileCourierScreen(navController = navController)
+            }
+
+            composable("orderDetail/{orderId}") { backStackEntry ->
+                val orderId = backStackEntry.arguments?.getString("orderId") ?: "0"
+                OrderDetailScreen(
+                    navController = navController,
+                    viewModel = viewModel,
+                    orderId = orderId
+                )
             }
         }
     }

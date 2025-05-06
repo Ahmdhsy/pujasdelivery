@@ -1,6 +1,7 @@
 package com.example.pujasdelivery.ui.courier
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,6 +18,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -72,7 +74,7 @@ fun CourierOrderScreen(
                 )
             }
             Text(
-                text = "Daftar Pesanan Kurir",
+                text = "Pesanan Masuk",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
@@ -103,7 +105,10 @@ fun CourierOrderScreen(
                 items(orders) { order ->
                     CourierOrderCard(
                         order = order,
-                        orderItems = orderItems[order.id] ?: emptyList()
+                        orderItems = orderItems[order.id] ?: emptyList(),
+                        onClick = {
+                            navController.navigate("orderDetail/${order.id}")
+                        }
                     )
                 }
             }
@@ -114,86 +119,76 @@ fun CourierOrderScreen(
 @Composable
 fun CourierOrderCard(
     order: Order,
-    orderItems: List<OrderItem>
+    orderItems: List<OrderItem>,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(4.dp, shape = RoundedCornerShape(12.dp)),
+            .shadow(4.dp, shape = RoundedCornerShape(12.dp))
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .padding(16.dp)
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            Icon(
+                imageVector = Icons.Default.Restaurant,
+                contentDescription = "Item",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(
+                modifier = Modifier.weight(1f)
             ) {
+                // List of tenants (warungs)
+                val tenantList = orderItems.mapNotNull { it.tenantName }.distinct()
+                val tenantText = if (tenantList.isNotEmpty()) {
+                    tenantList.joinToString(", ")
+                } else {
+                    "Unknown Tenant"
+                }
                 Text(
-                    text = "Pesanan #${order.id}",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                    text = tenantText,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Order status
                 Text(
                     text = order.status,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // List of items with quantities
+                val itemsText = orderItems.map { "${it.quantity} ${it.menuName}" }
+                    .joinToString(", ")
+                Text(
+                    text = itemsText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = "Alamat: ${order.deliveryAddress}",
-                style = MaterialTheme.typography.bodySmall
+                text = "Rp${order.totalPrice}",
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Total: Rp. ${order.totalPrice}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            orderItems.forEach { item ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Restaurant,
-                            contentDescription = "Item",
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
-                            Text(
-                                text = item.tenantName ?: "Unknown Tenant",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Text(
-                                text = item.menuName,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                            Text(
-                                text = "Jumlah: ${item.quantity}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                        }
-                    }
-                    Text(
-                        text = "Rp. ${item.price * item.quantity}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
         }
     }
 }

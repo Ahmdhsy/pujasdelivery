@@ -54,6 +54,21 @@ fun OrdersScreen(
         )
     }
 
+    val completedOrders = orders.filter { it.status == "Selesai" }.map { order ->
+        var orderItems: List<DataOrderItem> = emptyList()
+        coroutineScope.launch {
+            orderItems = viewModel.getOrderDetails(order.id).second
+        }
+        OrderItem(
+            tenantName = orderItems.joinToString(", ") { it.tenantName ?: "Unknown Tenant" },
+            status = order.status,
+            items = orderItems.map { "${it.quantity} ${it.menuName}" },
+            totalPrice = "Rp. ${order.totalPrice}",
+            orderId = order.id.toString(),
+            proofImageUri = order.proofImageUri
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -143,12 +158,29 @@ fun OrdersScreen(
                 }
             }
             1 -> {
-                // Tab "Riwayat" (untuk masa depan, sementara kosong)
-                Text(
-                    text = "Riwayat pesanan akan ditampilkan di sini nanti",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
+                // Tab "Riwayat"
+                if (completedOrders.isEmpty()) {
+                    Text(
+                        text = "Belum ada riwayat pesanan",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                } else {
+                    LazyColumn {
+                        items(completedOrders) { order ->
+                            OrderCard(
+                                tenantName = order.tenantName,
+                                status = order.status,
+                                items = order.items,
+                                totalPrice = order.totalPrice,
+                                proofImageUri = order.proofImageUri,
+                                onClick = {
+                                    navController.navigate("orderConfirmation/${order.orderId}")
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -211,7 +243,11 @@ fun OrderCard(
                     Text(
                         text = status,
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (status == "Sedang Diproses") Color(0xFF1976D2) else Color.Red
+                        color = when (status) {
+                            "Sedang Diproses" -> Color(0xFF1976D2)
+                            "Selesai" -> Color.Green
+                            else -> Color.Red
+                        }
                     )
                     items.forEach { item ->
                         Text(
