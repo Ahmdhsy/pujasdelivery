@@ -58,7 +58,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("io.coil-kt:coil-compose:2.0.0")
-
+    implementation("io.coil-kt:coil-compose:2.4.0")
 
     // Room Database
     implementation(libs.androidx.room.runtime)
@@ -86,7 +86,14 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview:1.6.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.navigation:navigation-compose:2.7.6")
-    implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
+    // Tambahan untuk fix error HttpLoggingInterceptor
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
 }

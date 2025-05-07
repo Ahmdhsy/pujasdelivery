@@ -418,6 +418,6 @@ fun cartItemToMenuWithTenantName(cartItem: CartItem): MenuWithTenantName {
         price = cartItem.price,
         description = "", // Default value karena CartItem tidak memiliki description
         category = "", // Default value karena CartItem tidak memiliki category
-        tenantName = cartItem.tenantName
+        tenantName = cartItem.tenantName ?: "Unknown Tenant"
     )
 }
