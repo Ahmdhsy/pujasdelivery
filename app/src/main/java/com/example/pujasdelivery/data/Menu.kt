@@ -1,7 +1,5 @@
 package com.example.pujasdelivery.data
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
 data class Menu(
@@ -10,7 +8,7 @@ data class Menu(
     @SerializedName("harga") val price: String,
     val deskripsi: String,
     val gambar: String,
-    val tenant: String,
+    @SerializedName("tenant_id") val tenantId: Long, // Ubah dari tenant (String) ke tenantId (Long)
     val category: String,
     @SerializedName("created_at") val createdAt: String,
     @SerializedName("updated_at") val updatedAt: String
@@ -23,4 +21,3 @@ data class Menu(
         }
     }
 }
-

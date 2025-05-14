@@ -17,7 +17,9 @@ data class CartItem(
     val menuId: Int,
     val name: String,
     val price: Int,
-    val quantity: Int
+    val quantity: Int,
+    val tenantId: Long,
+    val tenantName: String
 )
 
 class DashboardViewModel : ViewModel() {
@@ -56,7 +58,7 @@ class DashboardViewModel : ViewModel() {
                 }
                 Log.d("DashboardViewModel", "Respons menu: ${menuResponse.code()} - ${menuResponse.message()}")
                 val menusFromApi = if (menuResponse.isSuccessful) {
-                    menuResponse.body()?.data ?: emptyList()
+                    menuResponse.body() ?: emptyList()
                 } else {
                     Log.e("DashboardViewModel", "Gagal memuat menu: ${menuResponse.code()} - ${menuResponse.message()}")
                     emptyList()
@@ -68,7 +70,7 @@ class DashboardViewModel : ViewModel() {
                 }
                 Log.d("DashboardViewModel", "Respons tenant: ${tenantResponse.code()} - ${tenantResponse.message()}")
                 val tenantsFromApi = if (tenantResponse.isSuccessful) {
-                    tenantResponse.body()?.data ?: emptyList()
+                    tenantResponse.body() ?: emptyList()
                 } else {
                     Log.e("DashboardViewModel", "Gagal memuat tenants: ${tenantResponse.code()} - ${tenantResponse.message()}")
                     emptyList()
@@ -76,15 +78,15 @@ class DashboardViewModel : ViewModel() {
 
                 // Gabungkan menu dan tenant
                 val menuWithTenantNames = menusFromApi.map { menu ->
-                    val tenant = tenantsFromApi.find { it.name == menu.tenant }
+                    val tenant = tenantsFromApi.find { it.id.toLong() == menu.tenantId }
                     MenuWithTenantName(
                         id = menu.id,
-                        tenantId = tenant?.id ?: 0,
+                        tenantId = menu.tenantId,
                         name = menu.name,
                         price = menu.getPriceAsInt(),
                         description = menu.deskripsi,
                         category = menu.category,
-                        tenantName = menu.tenant
+                        tenantName = tenant?.name ?: "Unknown Tenant"
                     )
                 }
 
@@ -107,7 +109,7 @@ class DashboardViewModel : ViewModel() {
                     apiService.getMenus().execute()
                 }
                 val menusFromApi = if (menuResponse.isSuccessful) {
-                    menuResponse.body()?.data ?: emptyList()
+                    menuResponse.body() ?: emptyList()
                 } else {
                     emptyList()
                 }
@@ -116,22 +118,22 @@ class DashboardViewModel : ViewModel() {
                     apiService.getTenants().execute()
                 }
                 val tenantsFromApi = if (tenantResponse.isSuccessful) {
-                    tenantResponse.body()?.data ?: emptyList()
+                    tenantResponse.body() ?: emptyList()
                 } else {
                     emptyList()
                 }
 
-                val filteredMenus = menusFromApi.filter { it.tenant == tenantName }
+                val tenant = tenantsFromApi.find { it.name == tenantName }
+                val filteredMenus = menusFromApi.filter { it.tenantId == tenant?.id?.toLong() }
                 val menuWithTenantNames = filteredMenus.map { menu ->
-                    val tenant = tenantsFromApi.find { it.name == menu.tenant }
                     MenuWithTenantName(
                         id = menu.id,
-                        tenantId = tenant?.id ?: 0,
+                        tenantId = menu.tenantId,
                         name = menu.name,
                         price = menu.getPriceAsInt(),
                         description = menu.deskripsi,
                         category = menu.category,
-                        tenantName = menu.tenant
+                        tenantName = tenant?.name ?: "Unknown Tenant"
                     )
                 }
                 _menus.postValue(menuWithTenantNames)
@@ -148,7 +150,7 @@ class DashboardViewModel : ViewModel() {
                     apiService.getMenus().execute()
                 }
                 val menusFromApi = if (menuResponse.isSuccessful) {
-                    menuResponse.body()?.data ?: emptyList()
+                    menuResponse.body() ?: emptyList()
                 } else {
                     emptyList()
                 }
@@ -157,22 +159,22 @@ class DashboardViewModel : ViewModel() {
                     apiService.getTenants().execute()
                 }
                 val tenantsFromApi = if (tenantResponse.isSuccessful) {
-                    tenantResponse.body()?.data ?: emptyList()
+                    tenantResponse.body() ?: emptyList()
                 } else {
                     emptyList()
                 }
 
                 val filteredMenus = menusFromApi.filter { it.category == category }
                 val menuWithTenantNames = filteredMenus.map { menu ->
-                    val tenant = tenantsFromApi.find { it.name == menu.tenant }
+                    val tenant = tenantsFromApi.find { it.id.toLong() == menu.tenantId }
                     MenuWithTenantName(
                         id = menu.id,
-                        tenantId = tenant?.id ?: 0,
+                        tenantId = menu.tenantId,
                         name = menu.name,
                         price = menu.getPriceAsInt(),
                         description = menu.deskripsi,
                         category = menu.category,
-                        tenantName = menu.tenant
+                        tenantName = tenant?.name ?: "Unknown Tenant"
                     )
                 }
                 _menus.postValue(menuWithTenantNames)
@@ -194,7 +196,9 @@ class DashboardViewModel : ViewModel() {
                     menuId = menu.id,
                     name = menu.name,
                     price = menu.price,
-                    quantity = 1
+                    quantity = 1,
+                    tenantId = menu.tenantId,
+                    tenantName = menu.tenantName
                 )
             )
         }

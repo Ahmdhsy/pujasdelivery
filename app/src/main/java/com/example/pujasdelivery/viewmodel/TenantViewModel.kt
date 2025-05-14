@@ -27,7 +27,7 @@ class TenantViewModel : ViewModel() {
                     apiService.getTenants().execute()
                 }
                 if (response.isSuccessful) {
-                    val tenants = response.body()?.data ?: emptyList()
+                    val tenants = response.body() ?: emptyList()
                     _tenants.postValue(tenants)
                 } else {
                     Log.e("TenantViewModel", "Gagal memuat tenants: ${response.code()}")

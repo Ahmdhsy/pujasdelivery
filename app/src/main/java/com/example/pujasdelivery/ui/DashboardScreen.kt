@@ -137,25 +137,16 @@ fun TenantCard(tenant: Tenant, onClick: () -> Unit) {
                     .clip(RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                if (tenant.imageURL.isNullOrEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.LightGray),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No Image",
-                            color = Color.Gray,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                } else {
-                    AsyncImage(
-                        model = tenant.imageURL,
-                        contentDescription = "Tenant Image",
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.LightGray),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No Image",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
             }
@@ -176,7 +167,7 @@ fun TenantCard(tenant: Tenant, onClick: () -> Unit) {
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = tenant.description ?: "Deskripsi belum tersedia",
+                text = tenant.phone ?: "Nomor telepon belum tersedia",
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
                 color = MaterialTheme.colorScheme.secondary,
                 textAlign = TextAlign.Center,
@@ -215,7 +206,7 @@ fun MenuCard(menu: MenuWithTenantName, onClick: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
-                    model = "http://10.0.2.2:8080/images/${menu.id}", // Sesuaikan dengan path gambar
+                    model = "http://10.0.2.2:8080/images/${menu.id}",
                     contentDescription = "Menu Image",
                     contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()

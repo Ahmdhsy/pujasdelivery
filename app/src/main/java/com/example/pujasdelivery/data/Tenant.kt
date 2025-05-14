@@ -1,14 +1,12 @@
 package com.example.pujasdelivery.data
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
 data class Tenant(
     val id: Int,
     val name: String,
-    val description: String? = null,
-    val imageURL: String? = null,
-    val phone: String? = null,
-    val status: String? = null
+    val phone: String?,
+    val status: String?,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("updated_at") val updatedAt: String
 )
