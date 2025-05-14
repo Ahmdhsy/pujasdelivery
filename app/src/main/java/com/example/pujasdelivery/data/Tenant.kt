@@ -4,14 +4,11 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
-@Entity(tableName = "tenants")
 data class Tenant(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    val id: Int,
     val name: String,
-    val description: String = "",
-    @SerializedName("imageURL")
-    val imageURL: String = "",
+    val description: String? = null,
+    val imageURL: String? = null,
     val phone: String? = null,
     val status: String? = null
 )

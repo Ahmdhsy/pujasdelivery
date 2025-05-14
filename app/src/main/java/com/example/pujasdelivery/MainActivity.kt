@@ -1,13 +1,12 @@
 package com.example.pujasdelivery
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -27,32 +26,27 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.pujasdelivery.data.AppDatabase
 import com.example.pujasdelivery.ui.CategoryScreen
 import com.example.pujasdelivery.ui.DashboardScreen
-import com.example.pujasdelivery.ui.theme.*
-import com.example.pujasdelivery.viewmodel.DashboardViewModel
-import com.example.pujasdelivery.ui.screens.TenantDescScreen
-import com.example.pujasdelivery.ui.screens.ProfileScreen
-import com.example.pujasdelivery.ui.screens.EditProfileScreen
-import com.example.pujasdelivery.ui.screens.OrdersScreen
-import com.example.pujasdelivery.ui.screens.MenuDetailScreen
+import com.example.pujasdelivery.ui.TenantDescScreen
+import com.example.pujasdelivery.ui.MenuDetailScreen
 import com.example.pujasdelivery.ui.screens.CheckoutScreen
-import com.example.pujasdelivery.ui.screens.PaymentScreen
 import com.example.pujasdelivery.ui.screens.OrderConfirmationScreen
+import com.example.pujasdelivery.ui.theme.PujasDeliveryTheme
+import com.example.pujasdelivery.viewmodel.DashboardViewModel
 
 class MainActivity : ComponentActivity() {
     private val viewModel: DashboardViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AppDatabase.clearDatabase(applicationContext)
-
         setContent {
-            val navController = rememberNavController()
             PujasDeliveryTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    NavigationSetup(navController, viewModel)
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    NavigationSetup(navController = rememberNavController(), viewModel = viewModel)
                 }
             }
         }
@@ -66,7 +60,8 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
     Scaffold(
         bottomBar = {
             if (currentRoute != null && !currentRoute.startsWith("checkout") &&
-                !currentRoute.startsWith("payment") && !currentRoute.startsWith("orderConfirmation")) {
+                !currentRoute.startsWith("orderConfirmation")
+            ) {
                 BottomNavigationBar(navController)
             }
         }
@@ -79,18 +74,15 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
             composable("dashboard") {
                 DashboardScreen(viewModel, navController)
             }
-            composable("orders") {
-                OrdersScreen(navController)
-            }
-            composable("profile") {
-                ProfileScreen(navController)
-            }
-            composable("editProfile") {
-                EditProfileScreen(navController)
-            }
-            composable("category/{category}") { backStackEntry ->
-                val category = backStackEntry.arguments?.getString("category") ?: "Makanan"
-                CategoryScreen(category = category, viewModel = viewModel, navController = navController)
+            composable("tenantDesc/{tenantName}/{tenantId}") { backStackEntry ->
+                val tenantName = backStackEntry.arguments?.getString("tenantName")
+                val tenantId = backStackEntry.arguments?.getString("tenantId")?.toIntOrNull()
+                TenantDescScreen(
+                    tenantName = tenantName,
+                    tenantId = tenantId,
+                    navController = navController,
+                    viewModel = viewModel
+                )
             }
             composable("menuDetail/{menuName}") { backStackEntry ->
                 val menuName = backStackEntry.arguments?.getString("menuName") ?: ""
@@ -100,39 +92,25 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                     navController = navController
                 )
             }
-            composable("checkout") {
-                CheckoutScreen(
-                    navController = navController,
-                    viewModel = viewModel
+            composable("category/{category}") { backStackEntry ->
+                val category = backStackEntry.arguments?.getString("category") ?: ""
+                CategoryScreen(
+                    category = category,
+                    viewModel = viewModel,
+                    navController = navController
                 )
             }
-            composable("payment") {
-                PaymentScreen(
-                    navController = navController,
-                    viewModel = viewModel
+            composable("checkout") {
+                CheckoutScreen(
+                    viewModel = viewModel,
+                    navController = navController
                 )
             }
             composable("orderConfirmation/{orderId}") { backStackEntry ->
-                val orderId = backStackEntry.arguments?.getString("orderId") ?: "1"
-                OrderConfirmationScreen(navController = navController, viewModel = viewModel, orderId = orderId)
-            }
-            composable("orderConfirmation?cancel={cancel}") { backStackEntry ->
-                val cancel = backStackEntry.arguments?.getString("cancel")?.toBoolean() ?: false
-                val orderId = backStackEntry.arguments?.getString("orderId") ?: "1"
-                OrderConfirmationScreen(navController = navController, viewModel = viewModel, orderId = orderId)
-                if (cancel) {
-                    Log.d("Cancellation", "Order $orderId cancelled")
-                }
-            }
-            composable("tenantDesc/{tenantName}/{tenantId}") { backStackEntry ->
-                val tenantName = backStackEntry.arguments?.getString("tenantName")
-                val tenantId = backStackEntry.arguments?.getString("tenantId")?.toIntOrNull()
-                Log.d("Navigation", "Navigating to tenantDesc with tenantName: $tenantName, tenantId: $tenantId")
-                TenantDescScreen(
-                    tenantName = tenantName,
-                    tenantId = tenantId,
-                    navController = navController,
-                    viewModel = viewModel
+                val orderId = backStackEntry.arguments?.getString("orderId")?.toIntOrNull() ?: 0
+                OrderConfirmationScreen(
+                    orderId = orderId,
+                    navController = navController
                 )
             }
         }
@@ -143,7 +121,7 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
 fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
         "Beranda" to Icons.Default.Home,
-        "Pesanan" to Icons.Default.ShoppingCart,
+        "Keranjang" to Icons.Default.ShoppingCart,
         "Profil" to Icons.Default.Person
     )
 
@@ -159,7 +137,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         items.forEach { (title, icon) ->
             val route = when (title) {
                 "Beranda" -> "dashboard"
-                "Pesanan" -> "orders"
+                "Keranjang" -> "checkout"
                 "Profil" -> "profile"
                 else -> "dashboard"
             }
@@ -169,13 +147,13 @@ fun BottomNavigationBar(navController: NavHostController) {
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
-                        tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                        tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.secondary
                     )
                 },
                 label = {
                     Text(
                         text = title,
-                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.secondary
                     )
                 },
                 selected = isSelected,
@@ -194,9 +172,9 @@ fun BottomNavigationBar(navController: NavHostController) {
                     Modifier
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    selectedIconColor = MaterialTheme.colorScheme.onPrimary,
                     unselectedIconColor = MaterialTheme.colorScheme.secondary,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    selectedTextColor = MaterialTheme.colorScheme.onPrimary,
                     unselectedTextColor = MaterialTheme.colorScheme.secondary,
                     indicatorColor = Color.Transparent
                 )

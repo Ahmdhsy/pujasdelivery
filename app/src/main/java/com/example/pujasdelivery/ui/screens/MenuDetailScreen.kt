@@ -1,320 +1,66 @@
-package com.example.pujasdelivery.ui.screens
+package com.example.pujasdelivery.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import com.example.pujasdelivery.data.MenuWithTenantName
-import com.example.pujasdelivery.ui.SearchBar
+import androidx.navigation.NavController
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
 
 @Composable
 fun MenuDetailScreen(
     menuName: String,
     viewModel: DashboardViewModel,
-    navController: NavHostController
+    navController: NavController
 ) {
     val menus by viewModel.menus.observeAsState(initial = emptyList())
-    val loadingState by viewModel.loadingState.observeAsState(initial = DashboardViewModel.LoadingState.Idle)
-    val totalItemCount by viewModel.totalItemCount.observeAsState(initial = 0)
-    val totalPrice by viewModel.totalPrice.observeAsState(initial = 0)
-    var searchQuery by remember { mutableStateOf("") }
+    val menu = menus.find { it.name == menuName }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header with back button and menu name
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = { navController.popBackStack() },
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(Color.LightGray.copy(alpha = 0.2f), shape = CircleShape)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+        if (menu != null) {
             Text(
-                text = menuName,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center
+                text = menu.name,
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
-            Spacer(modifier = Modifier.size(40.dp)) // Placeholder for symmetry
-        }
-
-        // Search bar (now functional)
-        SearchBar(
-            searchQuery = searchQuery,
-            onSearchQueryChange = { searchQuery = it },
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        // Handle loading state
-        when (loadingState) {
-            DashboardViewModel.LoadingState.Loading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .wrapContentWidth(Alignment.CenterHorizontally)
-                )
-            }
-            DashboardViewModel.LoadingState.Error -> {
-                Text(
-                    text = "Terjadi kesalahan saat memuat data",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .wrapContentWidth(Alignment.CenterHorizontally)
-                )
-            }
-            else -> {
-                // First filter by menuName
-                val filteredByMenuName = menus.filter { menu ->
-                    menu.name.equals(menuName, ignoreCase = true)
-                }
-
-                // Then filter by searchQuery (name, category, tenantName)
-                val filteredMenus = filteredByMenuName.filter { menu ->
-                    val query = searchQuery.trim().lowercase()
-                    menu.name.lowercase().contains(query) ||
-                            menu.category.lowercase().contains(query) ||
-                            (menu.tenantName?.lowercase()?.contains(query) ?: false)
-                }
-
-                // Check if filteredMenus is empty and display a message if it is
-                if (filteredMenus.isEmpty()) {
-                    Text(
-                        text = if (searchQuery.isEmpty()) {
-                            "Tidak ada menu ditemukan untuk $menuName"
-                        } else {
-                            "Tidak ada hasil untuk \"$searchQuery\" di $menuName"
-                        },
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                            .wrapContentWidth(Alignment.CenterHorizontally)
-                    )
-                } else {
-                    // List of menu items
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(filteredMenus) { menu ->
-                            MenuDetailCard(
-                                menu = menu,
-                                viewModel = viewModel, // Pass the viewModel
-                                onAddClick = { viewModel.addToCart(menu) },
-                                onRemoveClick = { viewModel.removeFromCart(menu) }
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // Footer with item count, total price, and shopping cart button
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
             Text(
-                text = "$totalItemCount Item",
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground
+                text = "Harga: Rp ${menu.price}",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(bottom = 8.dp)
             )
-            Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = "Rp. $totalPrice",
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground
+                text = "Deskripsi: ${menu.description}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = { navController.navigate("checkout") },
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ShoppingCart,
-                    contentDescription = "Add to Cart",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
+            Text(
+                text = "Kategori: ${menu.category}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Text(
+                text = "Tenant: ${menu.tenantName}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            Button(onClick = { navController.popBackStack() }) {
+                Text("Kembali")
             }
-        }
-    }
-}
-
-@Composable
-fun MenuDetailCard(
-    menu: MenuWithTenantName,
-    viewModel: DashboardViewModel, // Add viewModel parameter
-    onAddClick: () -> Unit,
-    onRemoveClick: () -> Unit
-) {
-    // Observe the cart items to get the quantity of this specific menu item
-    val cartItems by viewModel.cartItems.observeAsState(initial = emptyList())
-    val itemCount = cartItems.find { it.menuId == menu.id && it.tenantName == menu.tenantName }?.quantity ?: 0
-
-    // Log to confirm the card is being rendered
-    println("Rendering MenuDetailCard for: ${menu.name}, Quantity in cart: $itemCount")
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(2.dp, shape = RoundedCornerShape(12.dp)),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Image placeholder with rounded corners
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.LightGray)
-            ) {
-                Text(
-                    text = "Image",
-                    color = Color.Gray,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = menu.name,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = menu.tenantName ?: "Unknown Tenant",
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Text(
-                    text = "Rp. ${menu.price}",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (itemCount > 0) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .background(
-                                MaterialTheme.colorScheme.primary,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        IconButton(
-                            onClick = {
-                                onRemoveClick()
-                            },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Text(
-                                text = "-",
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                        Text(
-                            text = "$itemCount",
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                        IconButton(
-                            onClick = {
-                                onAddClick()
-                            },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Text(
-                                text = "+",
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                    }
-                } else {
-                    Button(
-                        onClick = {
-                            onAddClick()
-                        },
-                        modifier = Modifier
-                            .height(30.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Text(
-                            text = "Tambah",
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp)
-                        )
-                    }
-                }
-            }
+        } else {
+            Text(
+                text = "Menu tidak ditemukan",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
         }
     }
 }

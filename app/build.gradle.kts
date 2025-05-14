@@ -96,4 +96,14 @@ dependencies {
 
     // Tambahan untuk fix error HttpLoggingInterceptor
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.6")
+
+    // Penambahan untuk memastikan kompatibilitas
+    // Pastikan versi Room konsisten (misalnya 2.6.1 jika belum didefinisikan di libs.versions.toml)
+    implementation("androidx.room:room-runtime:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+
+    // Resolusi konflik versi Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3") // Gunakan versi terbaru dari libs
 }
