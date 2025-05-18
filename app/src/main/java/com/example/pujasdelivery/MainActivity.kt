@@ -13,8 +13,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -27,8 +25,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.pujasdelivery.ui.CategoryScreen
 import com.example.pujasdelivery.ui.DashboardScreen
-import com.example.pujasdelivery.ui.TenantDescScreen
-import com.example.pujasdelivery.ui.MenuDetailScreen
+import com.example.pujasdelivery.ui.screens.TenantDescScreen
+import com.example.pujasdelivery.ui.screens.MenuDetailScreen
 import com.example.pujasdelivery.ui.screens.CheckoutScreen
 import com.example.pujasdelivery.ui.screens.OrderConfirmationScreen
 import com.example.pujasdelivery.ui.screens.OrdersScreen
@@ -154,7 +152,13 @@ fun BottomNavigationBar(navController: NavHostController) {
                 "Profil" -> "profile"
                 else -> "dashboard"
             }
-            val isSelected = currentRoute == route
+            val isSelected = when (title) {
+                "Beranda" -> currentRoute == "dashboard" ||
+                        currentRoute?.startsWith("category") == true ||
+                        currentRoute?.startsWith("tenantDesc") == true ||
+                        currentRoute?.startsWith("menuDetail") == true
+                else -> currentRoute == route
+            }
             NavigationBarItem(
                 icon = {
                     Icon(
@@ -171,12 +175,23 @@ fun BottomNavigationBar(navController: NavHostController) {
                 },
                 selected = isSelected,
                 onClick = {
-                    navController.navigate(route) {
-                        popUpTo(navController.graph.startDestinationId) {
-                            saveState = true
+                    if (title == "Beranda" && (currentRoute == "orders" || currentRoute == "profile")) {
+                        // Jika berpindah dari Pesanan atau Profil ke Beranda, reset ke dashboard
+                        navController.navigate("dashboard") {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
+                    } else {
+                        // Navigasi normal untuk tab lain atau saat sudah di Beranda
+                        navController.navigate(route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 },
                 modifier = if (isSelected) {

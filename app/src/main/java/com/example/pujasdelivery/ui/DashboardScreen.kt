@@ -1,15 +1,14 @@
 package com.example.pujasdelivery.ui
 
-import androidx.compose.foundation.Image
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalCafe
 import androidx.compose.material.icons.filled.Restaurant
@@ -22,53 +21,72 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
-import com.example.pujasdelivery.R
+import androidx.navigation.NavHostController
 import com.example.pujasdelivery.data.MenuWithTenantName
 import com.example.pujasdelivery.data.Tenant
 import com.example.pujasdelivery.ui.theme.PujasDeliveryTheme
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
+import kotlin.math.ceil
 
 @Composable
-fun DashboardScreen(viewModel: DashboardViewModel, navController: NavController) {
+fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostController) {
     PujasDeliveryTheme {
         val tenants by viewModel.tenants.observeAsState(initial = emptyList())
         val menus by viewModel.menus.observeAsState(initial = emptyList())
         val loadingState by viewModel.loadingState.observeAsState(DashboardViewModel.LoadingState.Idle)
         var searchQuery by remember { mutableStateOf("") }
 
-        val filteredMenus = menus.filter {
+        // Group menus by name to ensure uniqueness
+        val groupedMenus = menus.groupBy { it.name }
+        val uniqueMenus = groupedMenus.map { (_, items) -> items.first() }
+
+        // Filter unique menus based on search query
+        val filteredMenus = uniqueMenus.filter {
             it.name.contains(searchQuery, ignoreCase = true) ||
                     it.description.contains(searchQuery, ignoreCase = true)
         }
 
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Temukan makanan dan minuman yang ingin Anda pesan di Pujasera!",
-                style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            SearchBar(
-                searchQuery = searchQuery,
-                onSearchQueryChange = { searchQuery = it },
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            // Fixed header section
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(16.dp)
             ) {
-                item {
+                Text(
+                    text = "Temukan makanan dan minuman yang ingin Anda pesan di Pujasera POLBAN!",
+                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                SearchBar(
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = { searchQuery = it },
+                    onSearchSubmit = { query -> searchQuery = query }
+                )
+            }
+
+            // Scrollable section
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp)
+            ) {
+                // Show categories and tenants only if search query is empty
+                if (searchQuery.isEmpty()) {
+                    // Categories
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -100,12 +118,13 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavController)
                             )
                         }
                     }
-                }
 
-                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Tenants
                     Text(
                         text = "Tenant",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
@@ -120,7 +139,7 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavController)
                         }
                         DashboardViewModel.LoadingState.Error -> {
                             Text(
-                                text = "Gagal memuat data. Coba lagi.",
+                                text = "Terjadi kesalahan saat memuat data",
                                 color = MaterialTheme.colorScheme.error,
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -140,72 +159,121 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavController)
                                         .wrapContentWidth(Alignment.CenterHorizontally)
                                 )
                             } else {
-                                LazyVerticalGrid(
-                                    columns = GridCells.Fixed(2),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(max = 300.dp)
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
-                                    items(tenants) { tenant ->
-                                        TenantCard(
-                                            tenant = tenant,
-                                            onClick = {
-                                                navController.navigate("tenantDesc/${tenant.name}/${tenant.id}")
+                                    // Hitung jumlah baris untuk grid dua kolom
+                                    val rows = ceil(tenants.size / 2.0).toInt()
+                                    for (row in 0 until rows) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                        ) {
+                                            // Kolom kiri
+                                            if (row * 2 < tenants.size) {
+                                                TenantCard(
+                                                    tenant = tenants[row * 2],
+                                                    onClick = {
+                                                        Log.d("DashboardScreen", "Tenant ${tenants[row * 2].name} diklik, ID: ${tenants[row * 2].id}")
+                                                        navController.navigate("tenantDesc/${tenants[row * 2].name}/${tenants[row * 2].id}")
+                                                    },
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            } else {
+                                                Spacer(modifier = Modifier.weight(1f))
                                             }
-                                        )
+                                            // Kolom kanan
+                                            if (row * 2 + 1 < tenants.size) {
+                                                TenantCard(
+                                                    tenant = tenants[row * 2 + 1],
+                                                    onClick = {
+                                                        Log.d("DashboardScreen", "Tenant ${tenants[row * 2 + 1].name} diklik, ID: ${tenants[row * 2 + 1].id}")
+                                                        navController.navigate("tenantDesc/${tenants[row * 2 + 1].name}/${tenants[row * 2 + 1].id}")
+                                                    },
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            } else {
+                                                Spacer(modifier = Modifier.weight(1f))
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                item {
+                // Always show the Menu section
+                Text(
+                    text = "Menu",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                if (filteredMenus.isEmpty()) {
                     Text(
-                        text = "Menu",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        text = "Tidak ada menu yang ditemukan",
+                        color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                            .wrapContentWidth(Alignment.CenterHorizontally)
                     )
-                    if (filteredMenus.isEmpty()) {
-                        Text(
-                            text = "Tidak ada menu yang ditemukan",
-                            color = MaterialTheme.colorScheme.secondary,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                                .wrapContentWidth(Alignment.CenterHorizontally)
-                        )
-                    } else {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 1000.dp)
-                        ) {
-                            items(filteredMenus) { menu ->
-                                MenuCard(
-                                    menu = menu,
-                                    onClick = {
-                                        navController.navigate("menuDetail/${menu.name}")
-                                    }
-                                )
+                } else {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Hitung jumlah baris untuk grid dua kolom
+                        val rows = ceil(filteredMenus.size / 2.0).toInt()
+                        for (row in 0 until rows) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                // Kolom kiri
+                                if (row * 2 < filteredMenus.size) {
+                                    MenuCard(
+                                        menu = filteredMenus[row * 2],
+                                        onClick = {
+                                            navController.navigate("menuDetail/${filteredMenus[row * 2].name}")
+                                        },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                } else {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                                // Kolom kanan
+                                if (row * 2 + 1 < filteredMenus.size) {
+                                    MenuCard(
+                                        menu = filteredMenus[row * 2 + 1],
+                                        onClick = {
+                                            navController.navigate("menuDetail/${filteredMenus[row * 2 + 1].name}")
+                                        },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                } else {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
                             }
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(16.dp)) // Add padding at the bottom
             }
         }
     }
 }
 
 @Composable
-fun SearchBar(searchQuery: String, onSearchQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
+fun SearchBar(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onSearchSubmit: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     TextField(
         value = searchQuery,
         onValueChange = onSearchQueryChange,
@@ -238,7 +306,16 @@ fun SearchBar(searchQuery: String, onSearchQueryChange: (String) -> Unit, modifi
             cursorColor = MaterialTheme.colorScheme.primary
         ),
         shape = RoundedCornerShape(12.dp),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Search
+        ),
+        keyboardActions = KeyboardActions(
+            onSearch = {
+                onSearchSubmit(searchQuery)
+            }
+        ),
+        singleLine = true
     )
 }
 
@@ -275,9 +352,13 @@ fun CategoryCard(category: String, onClick: () -> Unit, icon: @Composable () -> 
 }
 
 @Composable
-fun TenantCard(tenant: Tenant, onClick: () -> Unit) {
+fun TenantCard(
+    tenant: Tenant,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(220.dp)
             .shadow(2.dp, shape = RoundedCornerShape(12.dp))
@@ -337,9 +418,13 @@ fun TenantCard(tenant: Tenant, onClick: () -> Unit) {
 }
 
 @Composable
-fun MenuCard(menu: MenuWithTenantName, onClick: () -> Unit) {
+fun MenuCard(
+    menu: MenuWithTenantName,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .shadow(2.dp, shape = RoundedCornerShape(12.dp))
             .clickable { onClick() },
@@ -371,13 +456,10 @@ fun MenuCard(menu: MenuWithTenantName, onClick: () -> Unit) {
                 text = menu.name,
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-            Text(
-                text = "Rp ${menu.price}",
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(top = 4.dp)
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
             )
         }
     }

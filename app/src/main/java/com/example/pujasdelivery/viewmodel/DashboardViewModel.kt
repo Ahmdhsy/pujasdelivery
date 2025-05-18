@@ -59,23 +59,23 @@ class DashboardViewModel : ViewModel() {
                     apiService.getTenants().execute()
                 }
                 Log.d("DashboardViewModel", "Respons tenant: ${tenantResponse.code()} - ${tenantResponse.message()}")
-                val tenantsFromApi = if (tenantResponse.isSuccessful) {
-                    tenantResponse.body() ?: emptyList()
-                } else {
+                val tenantsFromApi = if (tenantResponse.isSuccessful)  {
+                        tenantResponse.body() ?: emptyList()
+                    } else {
                     Log.e("DashboardViewModel", "Gagal memuat tenants: ${tenantResponse.code()} - ${tenantResponse.message()}")
                     emptyList()
                 }
 
                 val menuWithTenantNames = menusFromApi.map { menu ->
-                    val tenant = tenantsFromApi.find { it.id.toLong() == menu.tenantId }
+                    val tenant = tenantsFromApi.find { it.name == menu.tenant }
                     MenuWithTenantName(
                         id = menu.id,
-                        tenantId = menu.tenantId,
+                        tenantId = tenant?.id?.toLong() ?: 0L, // Set tenantId from tenant.id
                         name = menu.name,
                         price = menu.getPriceAsInt(),
                         description = menu.deskripsi,
                         category = menu.category,
-                        tenantName = tenant?.name ?: "Unknown Tenant"
+                        tenantName = menu.tenant ?: "Unknown Tenant"
                     )
                 }
 
@@ -100,6 +100,7 @@ class DashboardViewModel : ViewModel() {
                 val menusFromApi = if (menuResponse.isSuccessful) {
                     menuResponse.body() ?: emptyList()
                 } else {
+                    Log.e("DashboardViewModel", "Gagal memuat menu: ${menuResponse.code()}")
                     emptyList()
                 }
 
@@ -109,25 +110,28 @@ class DashboardViewModel : ViewModel() {
                 val tenantsFromApi = if (tenantResponse.isSuccessful) {
                     tenantResponse.body() ?: emptyList()
                 } else {
+                    Log.e("DashboardViewModel", "Gagal memuat tenants: ${tenantResponse.code()}")
                     emptyList()
                 }
 
                 val tenant = tenantsFromApi.find { it.name == tenantName }
-                val filteredMenus = menusFromApi.filter { it.tenantId == tenant?.id?.toLong() }
+                val filteredMenus = menusFromApi.filter { it.tenant == tenantName }
                 val menuWithTenantNames = filteredMenus.map { menu ->
                     MenuWithTenantName(
                         id = menu.id,
-                        tenantId = menu.tenantId,
+                        tenantId = tenant?.id?.toLong() ?: 0L,
                         name = menu.name,
                         price = menu.getPriceAsInt(),
                         description = menu.deskripsi,
                         category = menu.category,
-                        tenantName = tenant?.name ?: "Unknown Tenant"
+                        tenantName = tenantName
                     )
                 }
+                Log.d("DashboardViewModel", "Menus for tenant $tenantName: ${menuWithTenantNames.size}")
                 _menus.postValue(menuWithTenantNames)
             } catch (e: Exception) {
                 Log.e("DashboardViewModel", "Error memuat menu untuk tenant: ${e.message}")
+                _menus.postValue(emptyList())
             }
         }
     }
@@ -141,6 +145,7 @@ class DashboardViewModel : ViewModel() {
                 val menusFromApi = if (menuResponse.isSuccessful) {
                     menuResponse.body() ?: emptyList()
                 } else {
+                    Log.e("DashboardViewModel", "Gagal memuat menu: ${menuResponse.code()}")
                     emptyList()
                 }
 
@@ -150,25 +155,28 @@ class DashboardViewModel : ViewModel() {
                 val tenantsFromApi = if (tenantResponse.isSuccessful) {
                     tenantResponse.body() ?: emptyList()
                 } else {
+                    Log.e("DashboardViewModel", "Gagal memuat tenants: ${tenantResponse.code()}")
                     emptyList()
                 }
 
                 val filteredMenus = menusFromApi.filter { it.category == category }
                 val menuWithTenantNames = filteredMenus.map { menu ->
-                    val tenant = tenantsFromApi.find { it.id.toLong() == menu.tenantId }
+                    val tenant = tenantsFromApi.find { it.name == menu.tenant }
                     MenuWithTenantName(
                         id = menu.id,
-                        tenantId = menu.tenantId,
+                        tenantId = tenant?.id?.toLong() ?: 0L,
                         name = menu.name,
                         price = menu.getPriceAsInt(),
                         description = menu.deskripsi,
                         category = menu.category,
-                        tenantName = tenant?.name ?: "Unknown Tenant"
+                        tenantName = menu.tenant ?: "Unknown Tenant"
                     )
                 }
+                Log.d("DashboardViewModel", "Menus for category $category: ${menuWithTenantNames.size}")
                 _menus.postValue(menuWithTenantNames)
             } catch (e: Exception) {
                 Log.e("DashboardViewModel", "Error memuat menu untuk kategori: ${e.message}")
+                _menus.postValue(emptyList())
             }
         }
     }

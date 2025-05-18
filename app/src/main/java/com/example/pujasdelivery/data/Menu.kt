@@ -8,7 +8,7 @@ data class Menu(
     @SerializedName("harga") val price: String,
     val deskripsi: String,
     val gambar: String,
-    @SerializedName("tenant_id") val tenantId: Long, // Ubah dari tenant (String) ke tenantId (Long)
+    @SerializedName("tenant") val tenant: String?, // Changed from tenant_id to tenant (name)
     val category: String,
     @SerializedName("created_at") val createdAt: String,
     @SerializedName("updated_at") val updatedAt: String
