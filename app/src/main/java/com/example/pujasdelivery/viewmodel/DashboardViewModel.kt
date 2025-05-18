@@ -59,9 +59,9 @@ class DashboardViewModel : ViewModel() {
                     apiService.getTenants().execute()
                 }
                 Log.d("DashboardViewModel", "Respons tenant: ${tenantResponse.code()} - ${tenantResponse.message()}")
-                val tenantsFromApi = if (tenantResponse.isSuccessful)  {
-                        tenantResponse.body() ?: emptyList()
-                    } else {
+                val tenantsFromApi = if (tenantResponse.isSuccessful) {
+                    tenantResponse.body() ?: emptyList()
+                } else {
                     Log.e("DashboardViewModel", "Gagal memuat tenants: ${tenantResponse.code()} - ${tenantResponse.message()}")
                     emptyList()
                 }
@@ -70,7 +70,7 @@ class DashboardViewModel : ViewModel() {
                     val tenant = tenantsFromApi.find { it.name == menu.tenant }
                     MenuWithTenantName(
                         id = menu.id,
-                        tenantId = tenant?.id?.toLong() ?: 0L, // Set tenantId from tenant.id
+                        tenantId = tenant?.id?.toLong() ?: 0L,
                         name = menu.name,
                         price = menu.getPriceAsInt(),
                         description = menu.deskripsi,
@@ -199,8 +199,8 @@ class DashboardViewModel : ViewModel() {
                 )
             )
         }
-        _cartItems.postValue(currentCart)
-        updateCartTotals()
+        _cartItems.value = currentCart // Use setValue for immediate update
+        updateCartTotals(currentCart) // Pass currentCart to avoid race condition
     }
 
     fun removeFromCart(menuId: Int) {
@@ -213,22 +213,22 @@ class DashboardViewModel : ViewModel() {
             } else {
                 currentCart.remove(existingItem)
             }
-            _cartItems.postValue(currentCart)
-            updateCartTotals()
+            _cartItems.value = currentCart // Use setValue for immediate update
+            updateCartTotals(currentCart) // Pass currentCart to avoid race condition
         }
     }
 
     fun clearCart() {
-        _cartItems.postValue(emptyList())
-        updateCartTotals()
+        _cartItems.value = emptyList()
+        updateCartTotals(emptyList())
     }
 
-    private fun updateCartTotals() {
-        val currentCart = _cartItems.value ?: emptyList()
-        val totalItems = currentCart.sumOf { it.quantity }
-        val totalPrice = currentCart.sumOf { it.price * it.quantity }
-        _totalItemCount.postValue(totalItems)
-        _totalPrice.postValue(totalPrice)
+    private fun updateCartTotals(cart: List<CartItem>) {
+        val totalItems = cart.sumOf { it.quantity }
+        val totalPrice = cart.sumOf { it.price * it.quantity }
+        _totalItemCount.value = totalItems // Use setValue for immediate update
+        _totalPrice.value = totalPrice // Use setValue for immediate update
+        Log.d("DashboardViewModel", "Updated totals: items=$totalItems, price=$totalPrice")
     }
 
     enum class LoadingState {

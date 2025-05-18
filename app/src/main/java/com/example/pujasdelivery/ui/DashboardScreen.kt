@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalCafe
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -40,6 +41,8 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostControl
         val tenants by viewModel.tenants.observeAsState(initial = emptyList())
         val menus by viewModel.menus.observeAsState(initial = emptyList())
         val loadingState by viewModel.loadingState.observeAsState(DashboardViewModel.LoadingState.Idle)
+        val totalItemCount by viewModel.totalItemCount.observeAsState(initial = 0)
+        val totalPrice by viewModel.totalPrice.observeAsState(initial = 0)
         var searchQuery by remember { mutableStateOf("") }
 
         // Group menus by name to ensure uniqueness
@@ -52,216 +55,264 @@ fun DashboardScreen(viewModel: DashboardViewModel, navController: NavHostControl
                     it.description.contains(searchQuery, ignoreCase = true)
         }
 
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Fixed header section
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(16.dp)
+                    .fillMaxSize()
             ) {
-                Text(
-                    text = "Temukan makanan dan minuman yang ingin Anda pesan di Pujasera POLBAN!",
-                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-                SearchBar(
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = { searchQuery = it },
-                    onSearchSubmit = { query -> searchQuery = query }
-                )
-            }
-
-            // Scrollable section
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp)
-            ) {
-                // Show categories and tenants only if search query is empty
-                if (searchQuery.isEmpty()) {
-                    // Categories
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CategoryCard(
-                            category = "Makanan",
-                            onClick = { navController.navigate("category/Makanan") }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Restaurant,
-                                contentDescription = "Makanan Icon",
-                                tint = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier.size(48.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        CategoryCard(
-                            category = "Minuman",
-                            onClick = { navController.navigate("category/Minuman") }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.LocalCafe,
-                                contentDescription = "Minuman Icon",
-                                tint = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier.size(48.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Tenants
+                // Fixed header section
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(16.dp)
+                ) {
                     Text(
-                        text = "Tenant",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        text = "Temukan makanan dan minuman yang ingin Anda pesan di Pujasera POLBAN!",
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        modifier = Modifier.padding(bottom = 16.dp)
                     )
-                    when (loadingState) {
-                        DashboardViewModel.LoadingState.Loading -> {
-                            CircularProgressIndicator(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                                    .wrapContentWidth(Alignment.CenterHorizontally)
-                            )
+                    SearchBar(
+                        searchQuery = searchQuery,
+                        onSearchQueryChange = { searchQuery = it },
+                        onSearchSubmit = { query -> searchQuery = query }
+                    )
+                }
+
+                // Scrollable section
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp)
+                ) {
+                    // Show categories and tenants only if search query is empty
+                    if (searchQuery.isEmpty()) {
+                        // Categories
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CategoryCard(
+                                category = "Makanan",
+                                onClick = { navController.navigate("category/Makanan") }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Restaurant,
+                                    contentDescription = "Makanan Icon",
+                                    tint = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            CategoryCard(
+                                category = "Minuman",
+                                onClick = { navController.navigate("category/Minuman") }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.LocalCafe,
+                                    contentDescription = "Minuman Icon",
+                                    tint = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                            }
                         }
-                        DashboardViewModel.LoadingState.Error -> {
-                            Text(
-                                text = "Terjadi kesalahan saat memuat data",
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                                    .wrapContentWidth(Alignment.CenterHorizontally)
-                            )
-                        }
-                        DashboardViewModel.LoadingState.Idle -> {
-                            if (tenants.isEmpty()) {
-                                Text(
-                                    text = "Tidak ada tenant tersedia",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.secondary,
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Tenants
+                        Text(
+                            text = "Tenant",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                        when (loadingState) {
+                            DashboardViewModel.LoadingState.Loading -> {
+                                CircularProgressIndicator(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 8.dp)
+                                        .padding(16.dp)
                                         .wrapContentWidth(Alignment.CenterHorizontally)
                                 )
-                            } else {
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-                                    // Hitung jumlah baris untuk grid dua kolom
-                                    val rows = ceil(tenants.size / 2.0).toInt()
-                                    for (row in 0 until rows) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                                        ) {
-                                            // Kolom kiri
-                                            if (row * 2 < tenants.size) {
-                                                TenantCard(
-                                                    tenant = tenants[row * 2],
-                                                    onClick = {
-                                                        Log.d("DashboardScreen", "Tenant ${tenants[row * 2].name} diklik, ID: ${tenants[row * 2].id}")
-                                                        navController.navigate("tenantDesc/${tenants[row * 2].name}/${tenants[row * 2].id}")
-                                                    },
-                                                    modifier = Modifier.weight(1f)
-                                                )
-                                            } else {
-                                                Spacer(modifier = Modifier.weight(1f))
-                                            }
-                                            // Kolom kanan
-                                            if (row * 2 + 1 < tenants.size) {
-                                                TenantCard(
-                                                    tenant = tenants[row * 2 + 1],
-                                                    onClick = {
-                                                        Log.d("DashboardScreen", "Tenant ${tenants[row * 2 + 1].name} diklik, ID: ${tenants[row * 2 + 1].id}")
-                                                        navController.navigate("tenantDesc/${tenants[row * 2 + 1].name}/${tenants[row * 2 + 1].id}")
-                                                    },
-                                                    modifier = Modifier.weight(1f)
-                                                )
-                                            } else {
-                                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                            DashboardViewModel.LoadingState.Error -> {
+                                Text(
+                                    text = "Terjadi kesalahan saat memuat data",
+                                    color = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                                        .wrapContentWidth(Alignment.CenterHorizontally)
+                                )
+                            }
+                            DashboardViewModel.LoadingState.Idle -> {
+                                if (tenants.isEmpty()) {
+                                    Text(
+                                        text = "Tidak ada tenant tersedia",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 8.dp)
+                                            .wrapContentWidth(Alignment.CenterHorizontally)
+                                    )
+                                } else {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        // Hitung jumlah baris untuk grid dua kolom
+                                        val rows = ceil(tenants.size / 2.0).toInt()
+                                        for (row in 0 until rows) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                            ) {
+                                                // Kolom kiri
+                                                if (row * 2 < tenants.size) {
+                                                    TenantCard(
+                                                        tenant = tenants[row * 2],
+                                                        onClick = {
+                                                            Log.d("DashboardScreen", "Tenant ${tenants[row * 2].name} diklik, ID: ${tenants[row * 2].id}")
+                                                            navController.navigate("tenantDesc/${tenants[row * 2].name}/${tenants[row * 2].id}")
+                                                        },
+                                                        modifier = Modifier.weight(1f)
+                                                    )
+                                                } else {
+                                                    Spacer(modifier = Modifier.weight(1f))
+                                                }
+                                                // Kolom kanan
+                                                if (row * 2 + 1 < tenants.size) {
+                                                    TenantCard(
+                                                        tenant = tenants[row * 2 + 1],
+                                                        onClick = {
+                                                            Log.d("DashboardScreen", "Tenant ${tenants[row * 2 + 1].name} diklik, ID: ${tenants[row * 2 + 1].id}")
+                                                            navController.navigate("tenantDesc/${tenants[row * 2 + 1].name}/${tenants[row * 2 + 1].id}")
+                                                        },
+                                                        modifier = Modifier.weight(1f)
+                                                    )
+                                                } else {
+                                                    Spacer(modifier = Modifier.weight(1f))
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                // Always show the Menu section
-                Text(
-                    text = "Menu",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-                if (filteredMenus.isEmpty()) {
+                    // Always show the Menu section
                     Text(
-                        text = "Tidak ada menu yang ditemukan",
-                        color = MaterialTheme.colorScheme.secondary,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp)
-                            .wrapContentWidth(Alignment.CenterHorizontally)
+                        text = "Menu",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
-                } else {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // Hitung jumlah baris untuk grid dua kolom
-                        val rows = ceil(filteredMenus.size / 2.0).toInt()
-                        for (row in 0 until rows) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                // Kolom kiri
-                                if (row * 2 < filteredMenus.size) {
-                                    MenuCard(
-                                        menu = filteredMenus[row * 2],
-                                        onClick = {
-                                            navController.navigate("menuDetail/${filteredMenus[row * 2].name}")
-                                        },
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                } else {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                }
-                                // Kolom kanan
-                                if (row * 2 + 1 < filteredMenus.size) {
-                                    MenuCard(
-                                        menu = filteredMenus[row * 2 + 1],
-                                        onClick = {
-                                            navController.navigate("menuDetail/${filteredMenus[row * 2 + 1].name}")
-                                        },
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                } else {
-                                    Spacer(modifier = Modifier.weight(1f))
+                    if (filteredMenus.isEmpty()) {
+                        Text(
+                            text = "Tidak ada menu yang ditemukan",
+                            color = MaterialTheme.colorScheme.secondary,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                                .wrapContentWidth(Alignment.CenterHorizontally)
+                        )
+                    } else {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            // Hitung jumlah baris untuk grid dua kolom
+                            val rows = ceil(filteredMenus.size / 2.0).toInt()
+                            for (row in 0 until rows) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    // Kolom kiri
+                                    if (row * 2 < filteredMenus.size) {
+                                        MenuCard(
+                                            menu = filteredMenus[row * 2],
+                                            onClick = {
+                                                navController.navigate("menuDetail/${filteredMenus[row * 2].name}")
+                                            },
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    } else {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                    // Kolom kanan
+                                    if (row * 2 + 1 < filteredMenus.size) {
+                                        MenuCard(
+                                            menu = filteredMenus[row * 2 + 1],
+                                            onClick = {
+                                                navController.navigate("menuDetail/${filteredMenus[row * 2 + 1].name}")
+                                            },
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    } else {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
                                 }
                             }
                         }
                     }
+                    Spacer(modifier = Modifier.height(72.dp)) // Add extra padding for footer
                 }
-                Spacer(modifier = Modifier.height(16.dp)) // Add padding at the bottom
+            }
+
+            // Floating footer (only shown if items are in cart)
+            if (totalItemCount > 0) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp, vertical = 5.dp)
+                        .align(Alignment.BottomCenter)
+                        .shadow(4.dp, shape = RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { navController.navigate("checkout") }
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "$totalItemCount Item",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "Rp. $totalPrice",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = "Add to Cart",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
             }
         }
     }
