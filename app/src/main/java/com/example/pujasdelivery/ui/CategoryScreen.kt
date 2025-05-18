@@ -18,8 +18,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.pujasdelivery.data.CartItem
 import com.example.pujasdelivery.data.MenuWithTenantName
-import com.example.pujasdelivery.viewmodel.CartItem
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -113,7 +113,7 @@ fun MenuCard(
     onRemoveFromCart: () -> Unit,
     onClick: () -> Unit
 ) {
-    val cartItem = cartItems.find { it.menuId == menu.id }
+    val cartItem = cartItems.find { cartItem -> cartItem.menuId == menu.id }
     val quantity = cartItem?.quantity ?: 0
 
     Card(

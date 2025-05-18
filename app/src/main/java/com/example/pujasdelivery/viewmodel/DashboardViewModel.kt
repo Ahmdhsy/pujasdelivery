@@ -9,18 +9,10 @@ import com.example.pujasdelivery.api.RetrofitClient
 import com.example.pujasdelivery.data.Menu
 import com.example.pujasdelivery.data.MenuWithTenantName
 import com.example.pujasdelivery.data.Tenant
+import com.example.pujasdelivery.data.CartItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-data class CartItem(
-    val menuId: Int,
-    val name: String,
-    val price: Int,
-    val quantity: Int,
-    val tenantId: Long,
-    val tenantName: String
-)
 
 class DashboardViewModel : ViewModel() {
     private val apiService = RetrofitClient.menuApiService
@@ -52,7 +44,6 @@ class DashboardViewModel : ViewModel() {
             _loadingState.value = LoadingState.Loading
             try {
                 Log.d("DashboardViewModel", "Memulai panggilan API ke ${RetrofitClient.menuApiService.getMenus().request().url}")
-                // Ambil menu dari API
                 val menuResponse = withContext(Dispatchers.IO) {
                     apiService.getMenus().execute()
                 }
@@ -64,7 +55,6 @@ class DashboardViewModel : ViewModel() {
                     emptyList()
                 }
 
-                // Ambil tenant dari API
                 val tenantResponse = withContext(Dispatchers.IO) {
                     apiService.getTenants().execute()
                 }
@@ -76,7 +66,6 @@ class DashboardViewModel : ViewModel() {
                     emptyList()
                 }
 
-                // Gabungkan menu dan tenant
                 val menuWithTenantNames = menusFromApi.map { menu ->
                     val tenant = tenantsFromApi.find { it.id.toLong() == menu.tenantId }
                     MenuWithTenantName(

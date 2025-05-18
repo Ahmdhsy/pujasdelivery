@@ -105,5 +105,5 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
 
     // Resolusi konflik versi Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3") // Gunakan versi terbaru dari libs
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }

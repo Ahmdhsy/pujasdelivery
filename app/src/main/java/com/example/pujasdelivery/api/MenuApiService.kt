@@ -2,6 +2,7 @@ package com.example.pujasdelivery.api
 
 import com.example.pujasdelivery.data.Menu
 import com.example.pujasdelivery.data.Tenant
+import com.example.pujasdelivery.data.Order
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -16,4 +17,7 @@ interface MenuApiService {
 
     @POST("api/tenants")
     fun addTenant(@Body tenant: Tenant): Call<Tenant> // Ubah respons sesuai kebutuhan
+
+    @GET("orders")
+    fun getOrders(): Call<List<Order>>
 }

@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +31,8 @@ import com.example.pujasdelivery.ui.TenantDescScreen
 import com.example.pujasdelivery.ui.MenuDetailScreen
 import com.example.pujasdelivery.ui.screens.CheckoutScreen
 import com.example.pujasdelivery.ui.screens.OrderConfirmationScreen
+import com.example.pujasdelivery.ui.screens.OrdersScreen
+import com.example.pujasdelivery.ui.screens.ProfileScreen
 import com.example.pujasdelivery.ui.theme.PujasDeliveryTheme
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
 
@@ -100,6 +101,15 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                     navController = navController
                 )
             }
+            composable("orders") {
+                OrdersScreen(
+                    navController = navController,
+                    viewModel = viewModel
+                )
+            }
+            composable("profile") {
+                ProfileScreen(navController = navController)
+            }
             composable("checkout") {
                 CheckoutScreen(
                     viewModel = viewModel,
@@ -113,6 +123,9 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                     navController = navController
                 )
             }
+            composable("editProfile") {
+                // Tambahkan EditProfileScreen jika diperlukan
+            }
         }
     }
 }
@@ -121,7 +134,7 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
 fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
         "Beranda" to Icons.Default.Home,
-        "Keranjang" to Icons.Default.ShoppingCart,
+        "Pesanan" to Icons.Default.ShoppingCart,
         "Profil" to Icons.Default.Person
     )
 
@@ -137,7 +150,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         items.forEach { (title, icon) ->
             val route = when (title) {
                 "Beranda" -> "dashboard"
-                "Keranjang" -> "checkout"
+                "Pesanan" -> "orders"
                 "Profil" -> "profile"
                 else -> "dashboard"
             }
@@ -147,13 +160,13 @@ fun BottomNavigationBar(navController: NavHostController) {
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
-                        tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.secondary
+                        tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
                     )
                 },
                 label = {
                     Text(
                         text = title,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.secondary
+                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
                     )
                 },
                 selected = isSelected,
@@ -172,9 +185,9 @@ fun BottomNavigationBar(navController: NavHostController) {
                     Modifier
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
                     unselectedIconColor = MaterialTheme.colorScheme.secondary,
-                    selectedTextColor = MaterialTheme.colorScheme.onPrimary,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
                     unselectedTextColor = MaterialTheme.colorScheme.secondary,
                     indicatorColor = Color.Transparent
                 )
