@@ -33,6 +33,10 @@ import com.example.pujasdelivery.ui.screens.OrdersScreen
 import com.example.pujasdelivery.ui.screens.ProfileScreen
 import com.example.pujasdelivery.ui.theme.PujasDeliveryTheme
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
+import android.content.Context
+import androidx.compose.runtime.*
+import com.example.pujasdelivery.ui.OnboardingScreen
+import com.example.pujasdelivery.ui.screens.PaymentScreen
 
 class MainActivity : ComponentActivity() {
     private val viewModel: DashboardViewModel by viewModels()
@@ -41,15 +45,42 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             PujasDeliveryTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    NavigationSetup(navController = rememberNavController(), viewModel = viewModel)
-                }
+                MainScreen(viewModel)
             }
         }
     }
+}
+
+@Composable
+fun MainScreen(viewModel: DashboardViewModel) {
+    var screenState by remember { mutableStateOf(ScreenState.Splash) }
+    val navController = rememberNavController()
+
+    // Check if onboarding has been shown before
+    val sharedPreferences = navController.context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    val isFirstLaunch = sharedPreferences.getBoolean("is_first_launch", true)
+
+    when (screenState) {
+        ScreenState.Splash -> {
+            SplashScreen {
+                screenState = if (isFirstLaunch) ScreenState.Onboarding else ScreenState.Dashboard
+            }
+        }
+        ScreenState.Onboarding -> {
+            OnboardingScreen {
+                // Mark onboarding as shown
+                sharedPreferences.edit().putBoolean("is_first_launch", false).apply()
+                screenState = ScreenState.Dashboard
+            }
+        }
+        ScreenState.Dashboard -> {
+            NavigationSetup(navController = navController, viewModel = viewModel)
+        }
+    }
+}
+
+enum class ScreenState {
+    Splash, Onboarding, Dashboard
 }
 
 @Composable
@@ -59,6 +90,7 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
     Scaffold(
         bottomBar = {
             if (currentRoute != null && !currentRoute.startsWith("checkout") &&
+                !currentRoute.startsWith("payment") &&
                 !currentRoute.startsWith("orderConfirmation")
             ) {
                 BottomNavigationBar(navController)
@@ -114,11 +146,18 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                     navController = navController
                 )
             }
+            composable("payment") {
+                PaymentScreen(
+                    viewModel = viewModel,
+                    navController = navController
+                )
+            }
             composable("orderConfirmation/{orderId}") { backStackEntry ->
                 val orderId = backStackEntry.arguments?.getString("orderId")?.toIntOrNull() ?: 0
                 OrderConfirmationScreen(
                     orderId = orderId,
-                    navController = navController
+                    navController = navController,
+                    viewModel = viewModel
                 )
             }
             composable("editProfile") {
