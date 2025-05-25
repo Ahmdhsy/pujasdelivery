@@ -1,5 +1,6 @@
 package com.example.pujasdelivery.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,10 +10,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -29,9 +31,16 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.example.pujasdelivery.data.CartItem
+import com.example.pujasdelivery.data.Gedung
 import com.example.pujasdelivery.data.MenuWithTenantName
 import com.example.pujasdelivery.ui.theme.PujasDeliveryTheme
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.automirrored.filled.StickyNote2
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,10 +51,22 @@ fun CheckoutScreen(
     PujasDeliveryTheme {
         val cartItems by viewModel.cartItems.observeAsState(initial = emptyList())
         val totalPrice by viewModel.totalPrice.observeAsState(initial = 0)
+        val gedungs by viewModel.gedungs.observeAsState(initial = emptyList())
         var recipientName by remember { mutableStateOf("") }
-        var deliveryAddress by remember { mutableStateOf("") }
+        var selectedGedung by remember { mutableStateOf<Gedung?>(null) }
         var submissionMessage by remember { mutableStateOf("") }
         val scrollState = rememberScrollState()
+
+        // Debug log untuk memverifikasi perubahan gedungs
+        LaunchedEffect(gedungs) {
+            Log.d("CheckoutScreen", "Gedungs observed: ${gedungs.size} items - ${gedungs.map { it.nama_gedung }}")
+        }
+
+        // Panggil loadData() saat CheckoutScreen pertama kali ditampilkan
+        LaunchedEffect(Unit) {
+            viewModel.loadData()
+            Log.d("CheckoutScreen", "loadData() dipanggil ulang")
+        }
 
         Box(
             modifier = Modifier.fillMaxSize()
@@ -56,7 +77,7 @@ fun CheckoutScreen(
                     .fillMaxSize()
                     .verticalScroll(scrollState)
                     .padding(vertical = 16.dp)
-                    .padding(bottom = 150.dp) // Padding to avoid overlap with floating card
+                    .padding(bottom = 150.dp)
             ) {
                 // Header with back button and title
                 Row(
@@ -89,7 +110,7 @@ fun CheckoutScreen(
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.size(40.dp)) // Placeholder for symmetry
+                    Spacer(modifier = Modifier.size(40.dp))
                 }
 
                 // Delivery details section
@@ -103,6 +124,94 @@ fun CheckoutScreen(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // Dropdown untuk memilih Gedung
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    var expanded by remember { mutableStateOf(false) }
+
+                    // Debug log untuk memverifikasi klik dan state
+                    LaunchedEffect(expanded) {
+                        Log.d("CheckoutScreen", "Dropdown expanded state: $expanded")
+                    }
+
+                    // Ganti OutlinedTextField dengan Box untuk dropdown kustom
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .background(Color.White, shape = RoundedCornerShape(8.dp))
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clickable(
+                                enabled = true,
+                                onClick = {
+                                    expanded = !expanded
+                                    Log.d("CheckoutScreen", "Clicked dropdown, setting expanded to $expanded")
+                                }
+                            )
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = selectedGedung?.nama_gedung ?: "Pilih Gedung",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontSize = 16.sp,
+                                    color = if (selectedGedung == null) Color.Gray else MaterialTheme.colorScheme.onBackground
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(
+                                imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surface)
+                    ) {
+                        Log.d("CheckoutScreen", "Rendering DropdownMenu, gedungs size: ${gedungs.size}")
+                        if (gedungs.isEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text("Tidak ada gedung tersedia") },
+                                onClick = {},
+                                enabled = false,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        } else {
+                            gedungs.forEach { gedung ->
+                                DropdownMenuItem(
+                                    text = { Text(gedung.nama_gedung) },
+                                    onClick = {
+                                        selectedGedung = gedung
+                                        expanded = false
+                                        Log.d("CheckoutScreen", "Selected gedung: ${gedung.nama_gedung}")
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = recipientName,
                     onValueChange = { recipientName = it },
@@ -123,41 +232,10 @@ fun CheckoutScreen(
                     textStyle = MaterialTheme.typography.bodyLarge.copy(
                         fontSize = 16.sp
                     ),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        containerColor = Color.White,
-                        focusedLabelColor = Color.Gray,
-                        unfocusedLabelColor = Color.Gray
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = deliveryAddress,
-                    onValueChange = { deliveryAddress = it },
-                    label = {
-                        Text(
-                            text = "Alamat Pengiriman",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = Color.Gray
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .padding(horizontal = 16.dp),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(
-                        fontSize = 16.sp
-                    ),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        containerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
                         focusedLabelColor = Color.Gray,
                         unfocusedLabelColor = Color.Gray
                     ),
@@ -205,7 +283,7 @@ fun CheckoutScreen(
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 16.dp)
                     .shadow(4.dp, shape = RoundedCornerShape(12.dp))
-                    .align(Alignment.BottomCenter), // Fix at bottom
+                    .align(Alignment.BottomCenter),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -265,11 +343,11 @@ fun CheckoutScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = {
-                            if (recipientName.isNotBlank() && deliveryAddress.isNotBlank() && cartItems.isNotEmpty()) {
+                            if (recipientName.isNotBlank() && cartItems.isNotEmpty() && selectedGedung != null) {
                                 submissionMessage = "Meneruskan ke pembayaran..."
                                 navController.navigate("payment")
                             } else {
-                                submissionMessage = "Lengkapi nama, alamat, dan pastikan keranjang tidak kosong."
+                                submissionMessage = "Lengkapi nama, pilih gedung, dan pastikan keranjang tidak kosong."
                             }
                         },
                         modifier = Modifier
@@ -367,7 +445,7 @@ fun CheckoutItemCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.StickyNote2,
+                            imageVector = Icons.AutoMirrored.Filled.StickyNote2,
                             contentDescription = "Add Note",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
