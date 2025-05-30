@@ -44,19 +44,37 @@ import com.example.pujasdelivery.ui.screens.OrderConfirmationScreen
 import com.example.pujasdelivery.ui.courier.CourierOrderScreen
 import com.example.pujasdelivery.ui.courier.OrderDetailScreen
 import com.example.pujasdelivery.ui.courier.ProfileCourierScreen
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     private val viewModel: DashboardViewModel by viewModels()
+    private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AppDatabase.clearDatabase(applicationContext)
+
+        // Hapus database di background thread
+        coroutineScope.launch {
+            withContext(Dispatchers.IO) {
+                AppDatabase.clearDatabase(applicationContext)
+            }
+        }
+
+        val role = intent.getStringExtra("role")
+        val startDestination = when (role) {
+            "kurir" -> "courier_orders"
+            else -> "dashboard" // Default ke DashboardScreen untuk pengguna
+        }
+        Log.d("MainActivity", "Starting with role: $role, destination: $startDestination")
 
         setContent {
             val navController = rememberNavController()
             PujasDeliveryTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    NavigationSetup(navController = navController, viewModel = viewModel)
+                    NavigationSetup(navController = navController, viewModel = viewModel, startDestination = startDestination)
                 }
             }
         }
@@ -64,7 +82,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewModel) {
+fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewModel, startDestination: String) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -78,7 +96,6 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                     !currentRoute.startsWith("checkout") &&
                             !currentRoute.startsWith("payment") &&
                             !currentRoute.startsWith("orderConfirmation") &&
-                            !currentRoute.startsWith("mode_selection") &&
                             !currentRoute.startsWith("orderDetail") -> {
                         BottomNavigationBar(navController)
                     }
@@ -89,12 +106,9 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "mode_selection",
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("mode_selection") {
-                ModeSelectionScreen(navController)
-            }
             composable("dashboard") {
                 DashboardScreen(viewModel, navController)
             }
@@ -168,11 +182,9 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                     viewModel = viewModel
                 )
             }
-
             composable("courier_profile") {
                 ProfileCourierScreen(navController = navController)
             }
-
             composable("orderDetail/{orderId}") { backStackEntry ->
                 val orderId = backStackEntry.arguments?.getString("orderId") ?: "0"
                 OrderDetailScreen(
@@ -315,49 +327,6 @@ fun CourierBottomNavigationBar(navController: NavHostController) {
                     indicatorColor = Color.Transparent
                 )
             )
-        }
-    }
-}
-
-@Composable
-fun ModeSelectionScreen(navController: NavHostController) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Pilih Mode",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-        Button(
-            onClick = {
-                navController.navigate("dashboard") {
-                    popUpTo(navController.graph.startDestinationId)
-                    launchSingleTop = true
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-        ) {
-            Text("Mode Pengguna")
-        }
-        Button(
-            onClick = {
-                navController.navigate("courier_orders") {
-                    popUpTo(navController.graph.startDestinationId)
-                    launchSingleTop = true
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-        ) {
-            Text("Mode Kurir")
         }
     }
 }

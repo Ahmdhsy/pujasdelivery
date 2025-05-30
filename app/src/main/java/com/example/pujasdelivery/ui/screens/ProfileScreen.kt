@@ -1,5 +1,6 @@
 package com.example.pujasdelivery.ui.screens
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -12,18 +13,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.pujasdelivery.SignInActivity
+import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(navController: NavHostController) {
-    // Data statis untuk simulasi tampilan profil
+    val firebaseAuth = FirebaseAuth.getInstance()
     val name = "Nama Lengkap"
     val username = "usernamet123"
     val phoneNumber = "08123456789"
+    val context = LocalContext.current
 
     Scaffold(
         bottomBar = {
@@ -37,7 +42,6 @@ fun ProfileScreen(navController: NavHostController) {
                 .padding(horizontal = 16.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Judul "PROFIL SAYA"
             Text(
                 text = "PROFIL SAYA",
                 style = MaterialTheme.typography.titleLarge.copy(
@@ -49,12 +53,11 @@ fun ProfileScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Ikon Profil
             Box(
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF2C3755)) // Warna biru gelap sesuai Figma
+                    .background(Color(0xFF2C3755))
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -68,7 +71,6 @@ fun ProfileScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // NAMA LENGKAP
             Text(
                 text = "NAMA LENGKAP",
                 style = MaterialTheme.typography.bodySmall.copy(
@@ -80,7 +82,7 @@ fun ProfileScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(4.dp))
             OutlinedTextField(
                 value = name,
-                onValueChange = { /* Read-only, tidak ada perubahan */ },
+                onValueChange = { /* Read-only */ },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -100,7 +102,6 @@ fun ProfileScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // USERNAME
             Text(
                 text = "USERNAME",
                 style = MaterialTheme.typography.bodySmall.copy(
@@ -112,7 +113,7 @@ fun ProfileScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(4.dp))
             OutlinedTextField(
                 value = username,
-                onValueChange = { /* Read-only, tidak ada perubahan */ },
+                onValueChange = { /* Read-only */ },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -132,7 +133,6 @@ fun ProfileScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // NOMOR TELEPON
             Text(
                 text = "NOMOR TELEPON",
                 style = MaterialTheme.typography.bodySmall.copy(
@@ -144,7 +144,7 @@ fun ProfileScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(4.dp))
             OutlinedTextField(
                 value = phoneNumber,
-                onValueChange = { /* Read-only, tidak ada perubahan */ },
+                onValueChange = { /* Read-only */ },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -164,20 +164,44 @@ fun ProfileScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Tombol Edit Profil
             Button(
                 onClick = { navController.navigate("editProfile") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF4A261) // Warna oranye sesuai Figma
+                    containerColor = Color(0xFFF4A261)
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
                     text = "EDIT PROFIL",
-                    color = Color(0xFF2C3755), // Warna teks biru gelap
+                    color = Color(0xFF2C3755),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    firebaseAuth.signOut()
+                    val intent = Intent(context, SignInActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    context.startActivity(intent)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFDC3545)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = "LOGOUT",
+                    color = Color.White,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
