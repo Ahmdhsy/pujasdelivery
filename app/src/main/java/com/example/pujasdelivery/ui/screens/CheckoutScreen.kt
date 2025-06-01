@@ -1,5 +1,6 @@
 package com.example.pujasdelivery.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,10 +29,16 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
+import com.example.pujasdelivery.api.RetrofitClient
 import com.example.pujasdelivery.data.CartItem
 import com.example.pujasdelivery.data.MenuWithTenantName
+import com.example.pujasdelivery.data.RegisterResponse
 import com.example.pujasdelivery.ui.theme.PujasDeliveryTheme
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
+import com.google.firebase.auth.FirebaseAuth
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +52,45 @@ fun CheckoutScreen(
         var recipientName by remember { mutableStateOf("") }
         var deliveryAddress by remember { mutableStateOf("") }
         var submissionMessage by remember { mutableStateOf("") }
+        var isLoading by remember { mutableStateOf(true) }
+        var errorMessage by remember { mutableStateOf<String?>(null) }
         val scrollState = rememberScrollState()
+        val firebaseAuth = FirebaseAuth.getInstance()
+
+        // Ambil nama pengguna dari backend
+        LaunchedEffect(Unit) {
+            firebaseAuth.currentUser?.getIdToken(true)?.addOnCompleteListener { tokenTask ->
+                if (tokenTask.isSuccessful) {
+                    val idToken = tokenTask.result?.token
+                    if (idToken != null) {
+                        RetrofitClient.apiService.getUser("Bearer $idToken").enqueue(object : Callback<RegisterResponse> {
+                            override fun onResponse(call: Call<RegisterResponse>, response: Response<RegisterResponse>) {
+                                if (response.isSuccessful && response.body()?.status == "success") {
+                                    recipientName = response.body()?.data?.name ?: ""
+                                    Log.d("CheckoutScreen", "Nama pengguna: $recipientName")
+                                } else {
+                                    errorMessage = "Gagal memuat nama pengguna: ${response.message()}"
+                                    Log.e("CheckoutScreen", "Error: ${response.code()} - ${response.message()}")
+                                }
+                                isLoading = false
+                            }
+
+                            override fun onFailure(call: Call<RegisterResponse>, t: Throwable) {
+                                errorMessage = "Error jaringan: ${t.message}"
+                                Log.e("CheckoutScreen", "Network error: ${t.message}", t)
+                                isLoading = false
+                            }
+                        })
+                    } else {
+                        errorMessage = "Gagal mendapatkan token"
+                        isLoading = false
+                    }
+                } else {
+                    errorMessage = "Gagal mendapatkan token: ${tokenTask.exception?.message}"
+                    isLoading = false
+                }
+            }
+        }
 
         Box(
             modifier = Modifier.fillMaxSize()
@@ -56,9 +101,9 @@ fun CheckoutScreen(
                     .fillMaxSize()
                     .verticalScroll(scrollState)
                     .padding(vertical = 16.dp)
-                    .padding(bottom = 150.dp) // Padding to avoid overlap with floating card
+                    .padding(bottom = 150.dp)
             ) {
-                // Header with back button and title
+                // Header
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -89,10 +134,10 @@ fun CheckoutScreen(
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.size(40.dp)) // Placeholder for symmetry
+                    Spacer(modifier = Modifier.size(40.dp))
                 }
 
-                // Delivery details section
+                // Delivery details
                 Text(
                     text = "Detail Pengiriman",
                     style = MaterialTheme.typography.bodyLarge.copy(
@@ -103,37 +148,59 @@ fun CheckoutScreen(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = recipientName,
-                    onValueChange = { recipientName = it },
-                    label = {
-                        Text(
-                            text = "Nama Penerima",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = Color.Gray
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .padding(horizontal = 16.dp),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(
-                        fontSize = 16.sp
-                    ),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        containerColor = Color.White,
-                        focusedLabelColor = Color.Gray,
-                        unfocusedLabelColor = Color.Gray
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
-                )
+
+                // Nama Penerima (read-only)
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .align(Alignment.CenterHorizontally)
+                    )
+                } else if (errorMessage != null) {
+                    Text(
+                        text = errorMessage!!,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .align(Alignment.CenterHorizontally)
+                    )
+                } else {
+                    OutlinedTextField(
+                        value = recipientName,
+                        onValueChange = { /* Read-only */ },
+                        label = {
+                            Text(
+                                text = "Nama Penerima",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = Color.Gray
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .padding(horizontal = 16.dp),
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(
+                            fontSize = 16.sp
+                        ),
+                        readOnly = true,
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            containerColor = Color.White,
+                            focusedLabelColor = Color.Gray,
+                            unfocusedLabelColor = Color.Gray,
+                            disabledBorderColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // Alamat Pengiriman
                 OutlinedTextField(
                     value = deliveryAddress,
                     onValueChange = { deliveryAddress = it },
@@ -167,7 +234,7 @@ fun CheckoutScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Cart items list
+                // Cart items
                 if (cartItems.isEmpty()) {
                     Text(
                         text = "Keranjang kosong",
@@ -194,18 +261,17 @@ fun CheckoutScreen(
                         }
                     }
                 }
-                // Add bottom padding to ensure content isn't cut off
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Floating Total Pesanan and Button Card
+            // Floating Total Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 16.dp)
                     .shadow(4.dp, shape = RoundedCornerShape(12.dp))
-                    .align(Alignment.BottomCenter), // Fix at bottom
+                    .align(Alignment.BottomCenter),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -269,7 +335,7 @@ fun CheckoutScreen(
                                 submissionMessage = "Meneruskan ke pembayaran..."
                                 navController.navigate("payment")
                             } else {
-                                submissionMessage = "Lengkapi nama, alamat, dan pastikan keranjang tidak kosong."
+                                submissionMessage = "Lengkapi alamat dan pastikan keranjang tidak kosong."
                             }
                         },
                         modifier = Modifier
@@ -325,7 +391,6 @@ fun CheckoutItemCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Menu details
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -384,12 +449,9 @@ fun CheckoutItemCard(
                     }
                 }
             }
-
-            // Image and quantity controls (aligned to end)
             Column(
                 horizontalAlignment = Alignment.End
             ) {
-                // Image placeholder
                 Box(
                     modifier = Modifier
                         .size(80.dp)
@@ -404,7 +466,6 @@ fun CheckoutItemCard(
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                // Quantity controls
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -444,7 +505,6 @@ fun CheckoutItemCard(
         }
     }
 
-    // Custom dialog
     if (showNotesDialog) {
         Dialog(
             onDismissRequest = { showNotesDialog = false },
@@ -469,7 +529,6 @@ fun CheckoutItemCard(
                         .padding(16.dp)
                         .fillMaxWidth()
                 ) {
-                    // Title
                     Text(
                         text = "Catatan untuk ${cartItem.name}",
                         style = MaterialTheme.typography.titleLarge.copy(
@@ -479,8 +538,6 @@ fun CheckoutItemCard(
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    // TextField with gray background
                     TextField(
                         value = notes,
                         onValueChange = { notes = it },
@@ -506,8 +563,6 @@ fun CheckoutItemCard(
                         shape = RoundedCornerShape(8.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    // Buttons
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
@@ -545,7 +600,6 @@ fun CheckoutItemCard(
     }
 }
 
-// Helper function
 fun cartItemToMenuWithTenantName(cartItem: CartItem): MenuWithTenantName {
     return MenuWithTenantName(
         id = cartItem.menuId,

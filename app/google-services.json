@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "326049008113",
+    "firebase_url": "https://pujas-delivery-default-rtdb.firebaseio.com",
+    "project_id": "pujas-delivery",
+    "storage_bucket": "pujas-delivery.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:326049008113:android:8dd527b30a38e49aaf9c50",
+        "android_client_info": {
+          "package_name": "com.example.pujasdelivery"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKmOUnbpKyF3HwYtzvB8uRbxzOFChTQ7c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

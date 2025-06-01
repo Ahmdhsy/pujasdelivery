@@ -1,4 +1,4 @@
-package com.example.pujasdelivery.ui.screens
+package com.example.pujasdelivery.ui.courier
 
 import android.content.Intent
 import android.content.SharedPreferences
@@ -30,12 +30,11 @@ import retrofit2.Response
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(navController: NavHostController) {
+fun ProfileCourierScreen(navController: NavHostController) {
     val firebaseAuth = FirebaseAuth.getInstance()
     val context = LocalContext.current
     val sharedPreferences: SharedPreferences = context.getSharedPreferences("user_prefs", android.content.Context.MODE_PRIVATE)
     var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf(firebaseAuth.currentUser?.email ?: "") }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -49,17 +48,16 @@ fun ProfileScreen(navController: NavHostController) {
                         override fun onResponse(call: Call<RegisterResponse>, response: Response<RegisterResponse>) {
                             if (response.isSuccessful && response.body()?.status == "success") {
                                 name = response.body()?.data?.name ?: ""
-                                email = response.body()?.data?.email ?: firebaseAuth.currentUser?.email ?: ""
                             } else {
                                 errorMessage = "Gagal memuat data pengguna: ${response.message()}"
-                                Log.e("ProfileScreen", "Error: ${response.code()} - ${response.message()}")
+                                Log.e("ProfileCourierScreen", "Error: ${response.code()} - ${response.message()}")
                             }
                             isLoading = false
                         }
 
                         override fun onFailure(call: Call<RegisterResponse>, t: Throwable) {
                             errorMessage = "Error jaringan: ${t.message}"
-                            Log.e("ProfileScreen", "Network error: ${t.message}", t)
+                            Log.e("ProfileCourierScreen", "Network error: ${t.message}", t)
                             isLoading = false
                         }
                     })
@@ -137,38 +135,6 @@ fun ProfileScreen(navController: NavHostController) {
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = name,
-                        onValueChange = { /* Read-only */ },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        textStyle = MaterialTheme.typography.bodyLarge.copy(
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal
-                        ),
-                        readOnly = true,
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
-                            focusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            containerColor = Color.White,
-                            disabledBorderColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Email
-                    Text(
-                        text = "EMAIL",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = Color.Gray
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedTextField(
-                        value = email,
                         onValueChange = { /* Read-only */ },
                         modifier = Modifier
                             .fillMaxWidth()

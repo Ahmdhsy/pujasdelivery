@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
@@ -26,7 +25,7 @@ import com.example.pujasdelivery.viewmodel.DashboardViewModel
 
 @Composable
 fun OrderConfirmationScreen(
-    orderId: Int,
+    orderId: String,
     navController: NavHostController,
     viewModel: DashboardViewModel
 ) {
