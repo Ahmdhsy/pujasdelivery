@@ -3,6 +3,7 @@ package com.example.pujasdelivery.api
 import com.example.pujasdelivery.data.Menu
 import com.example.pujasdelivery.data.Tenant
 import com.example.pujasdelivery.data.Order
+import com.example.pujasdelivery.data.Gedung
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -20,4 +21,7 @@ interface MenuApiService {
 
     @GET("orders")
     fun getOrders(): Call<List<Order>>
+
+    @GET("api/gedung")
+    fun getBuildings(): Call<List<Gedung>>
 }

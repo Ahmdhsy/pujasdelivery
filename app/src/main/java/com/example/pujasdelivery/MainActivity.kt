@@ -1,5 +1,6 @@
 package com.example.pujasdelivery
 
+
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -42,12 +43,15 @@ import com.example.pujasdelivery.ui.courier.ProfileCourierScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
+
 class MainActivity : ComponentActivity() {
     private val viewModel: DashboardViewModel by viewModels()
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
 
         val role = intent.getStringExtra("role")
         val startDestination = when (role) {
@@ -55,6 +59,7 @@ class MainActivity : ComponentActivity() {
             else -> "dashboard" // Default ke DashboardScreen untuk pengguna
         }
         Log.d("MainActivity", "Starting with role: $role, destination: $startDestination")
+
 
         setContent {
             val navController = rememberNavController()
@@ -67,10 +72,12 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 @Composable
 fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewModel, startDestination: String) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
 
     Scaffold(
         bottomBar = {
@@ -175,16 +182,19 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
     }
 }
 
+
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
 
     val items = listOf(
         "Beranda" to Icons.Default.Home,
         "Pesanan" to Icons.Default.ShoppingCart,
         "Profil" to Icons.Default.Person
     )
+
 
     NavigationBar(
         modifier = Modifier
@@ -243,15 +253,18 @@ fun BottomNavigationBar(navController: NavHostController) {
     }
 }
 
+
 @Composable
 fun CourierBottomNavigationBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+
     val items = listOf(
         "Pesanan" to Icons.Default.ShoppingCart,
         "Profil" to Icons.Default.Person
     )
+
 
     NavigationBar(
         modifier = Modifier
