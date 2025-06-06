@@ -2,6 +2,7 @@ package com.example.pujasdelivery.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,8 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -21,18 +21,65 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.pujasdelivery.api.RetrofitClient
+import com.example.pujasdelivery.data.TransactionResponse
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
+import com.google.firebase.auth.FirebaseAuth
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 @Composable
 fun OrderConfirmationScreen(
-    orderId: String,
     navController: NavHostController,
-    viewModel: DashboardViewModel
+    viewModel: DashboardViewModel,
+    orderId: String
 ) {
-    val totalPriceState = viewModel.totalPrice.observeAsState(initial = 0)
-    val totalPrice = totalPriceState.value
+    val firebaseAuth = FirebaseAuth.getInstance()
+    var transaction by remember { mutableStateOf<TransactionResponse?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Placeholder untuk data kurir (ganti dengan API jika tersedia)
     val courierName = "Budi Kurir"
     val whatsappNumber = "6281234567890"
+
+    // Ambil detail transaksi
+    LaunchedEffect(orderId) {
+        firebaseAuth.currentUser?.getIdToken(true)?.addOnCompleteListener { tokenTask ->
+            if (tokenTask.isSuccessful) {
+                val token = tokenTask.result?.token
+                if (token != null) {
+                    RetrofitClient.apiService.getTransaction("Bearer $token", orderId.toInt()).enqueue(object : Callback<TransactionResponse> {
+                        override fun onResponse(call: Call<TransactionResponse>, response: Response<TransactionResponse>) {
+                            if (response.isSuccessful && response.body() != null) {
+                                transaction = response.body()
+                                Log.d("OrderConfirmationScreen", "Transaction fetched: ${response.body()?.data?.id}")
+                            } else {
+                                errorMessage = "Gagal memuat transaksi: ${response.message()}"
+                                Log.e("OrderConfirmationScreen", "API error: ${response.code()} - ${response.message()}")
+                            }
+                            isLoading = false
+                        }
+
+                        override fun onFailure(call: Call<TransactionResponse>, t: Throwable) {
+                            errorMessage = "Error jaringan: ${t.message}"
+                            Log.e("OrderConfirmationScreen", "Network error: ${t.message}", t)
+                            isLoading = false
+                        }
+                    })
+                } else {
+                    errorMessage = "Gagal mendapatkan token"
+                    Log.e("OrderConfirmationScreen", "Token is null")
+                    isLoading = false
+                }
+            } else {
+                errorMessage = "Gagal mendapatkan token: ${tokenTask.exception?.message}"
+                Log.e("OrderConfirmationScreen", "Token error: ${tokenTask.exception?.message}")
+                isLoading = false
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -61,7 +108,7 @@ fun OrderConfirmationScreen(
                 )
             }
             Text(
-                text = "Status Pesanan",
+                text = "Status Pesanan #$orderId",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
@@ -79,6 +126,37 @@ fun OrderConfirmationScreen(
                 .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+                return@Column
+            }
+
+            if (errorMessage != null) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = errorMessage!!,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+                return@Column
+            }
+
+            if (transaction == null) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "Transaksi tidak ditemukan",
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+                return@Column
+            }
+
             Text(
                 text = "Cek Status Pesanan",
                 style = MaterialTheme.typography.bodyMedium,
@@ -109,12 +187,17 @@ fun OrderConfirmationScreen(
                         .fillMaxWidth()
                 ) {
                     Text(
-                        text = "Sedang Diproses",
+                        text = transaction?.data?.status?.replaceFirstChar { it.uppercase() } ?: "Sedang Diproses",
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Pesanan Anda sedang diproses!",
+                        text = when (transaction?.data?.status?.lowercase()) {
+                            "pending" -> "Pesanan Anda sedang menunggu konfirmasi."
+                            "confirmed" -> "Pesanan Anda telah dikonfirmasi!"
+                            "delivered" -> "Pesanan Anda telah dikirim."
+                            else -> "Pesanan Anda sedang diproses!"
+                        },
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -201,16 +284,39 @@ fun OrderConfirmationScreen(
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
-                            text = "Rp. $totalPrice",
+                            text = "Rp. ${transaction?.data?.totalPrice?.toInt() ?: 0}",
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Detail pesanan tidak tersedia",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.secondary
+                        text = "Detail Pesanan",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    transaction?.data?.items?.forEach { item ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Menu ID ${item.menuId} (x${item.quantity})",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                            Text(
+                                text = "Rp. ${item.subtotal.toInt()}",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        if (!item.catatan.isNullOrEmpty()) {
+                            Text(
+                                text = "Catatan: ${item.catatan}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
                 }
             }
 

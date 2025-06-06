@@ -97,7 +97,7 @@ class DashboardViewModel : ViewModel() {
 
                                         _menus.postValue(menuWithTenantNames)
                                         _tenants.postValue(tenantsFromApi)
-                                        _gedungs.postValue(gedungsFromApi) // Pastikan gedungs diperbarui
+                                        _gedungs.postValue(gedungsFromApi)
                                         _loadingState.postValue(LoadingState.Idle)
                                         Log.d("DashboardViewModel", "Gedungs loaded: ${gedungsFromApi.size} items - ${gedungsFromApi.map { it.nama_gedung }}")
                                     }
@@ -298,6 +298,18 @@ class DashboardViewModel : ViewModel() {
         _totalItemCount.value = totalItems
         _totalPrice.value = totalPrice
         Log.d("DashboardViewModel", "Updated totals: items=$totalItems, price=$totalPrice")
+    }
+
+    // Memperbarui catatan untuk item tertentu berdasarkan menuId
+    fun updateCartItemNote(menuId: Int, catatan: String?) {
+        val currentCart = _cartItems.value?.toMutableList() ?: mutableListOf()
+        val existingItem = currentCart.find { it.menuId == menuId }
+        if (existingItem != null) {
+            currentCart.remove(existingItem)
+            currentCart.add(existingItem.copy(catatan = catatan))
+            _cartItems.value = currentCart
+            Log.d("DashboardViewModel", "Updated note for menuId $menuId: $catatan")
+        }
     }
 
     enum class LoadingState {

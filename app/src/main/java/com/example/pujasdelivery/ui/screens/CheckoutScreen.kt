@@ -171,11 +171,12 @@ fun CheckoutScreen(
                         onValueChange = { /* Read-only */ },
                         label = {
                             Text(
-                                text = "Nama Penerima",                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = Color.Gray
+                                text = "Nama Penerima",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = Color.Gray
                             )
                         },
                         modifier = Modifier
@@ -282,6 +283,7 @@ fun CheckoutScreen(
                         cartItems.forEach { item ->
                             CheckoutItemCard(
                                 cartItem = item,
+                                viewModel = viewModel, // Tambahkan viewModel
                                 onAddClick = { viewModel.addToCart(cartItemToMenuWithTenantName(item)) },
                                 onRemoveClick = { viewModel.removeFromCart(item.menuId) }
                             )
@@ -398,11 +400,12 @@ fun CheckoutScreen(
 @Composable
 fun CheckoutItemCard(
     cartItem: CartItem,
+    viewModel: DashboardViewModel, // Tambahkan parameter viewModel
     onAddClick: () -> Unit,
     onRemoveClick: () -> Unit
 ) {
     var showNotesDialog by remember { mutableStateOf(false) }
-    var notes by remember { mutableStateOf("") }
+    var noteInput by remember { mutableStateOf(cartItem.catatan ?: "") } // Inisialisasi dari cartItem.catatan
 
     Card(
         modifier = Modifier
@@ -466,12 +469,12 @@ fun CheckoutItemCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (notes.isEmpty()) "Catatan" else notes,
+                            text = cartItem.catatan ?: "Catatan", // Tampilkan catatan dari cartItem
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium
                             ),
-                            color = if (notes.isEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+                            color = if (cartItem.catatan.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
@@ -566,8 +569,8 @@ fun CheckoutItemCard(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     TextField(
-                        value = notes,
-                        onValueChange = { notes = it },
+                        value = noteInput,
+                        onValueChange = { noteInput = it },
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(
@@ -606,7 +609,10 @@ fun CheckoutItemCard(
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
-                            onClick = { showNotesDialog = false },
+                            onClick = {
+                                viewModel.updateCartItemNote(cartItem.menuId, noteInput.takeIf { it.isNotBlank() }) // Simpan catatan
+                                showNotesDialog = false
+                            },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary
                             )

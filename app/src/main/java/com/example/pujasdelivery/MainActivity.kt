@@ -1,6 +1,5 @@
 package com.example.pujasdelivery
 
-
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -22,10 +21,12 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.pujasdelivery.ui.CategoryScreen
 import com.example.pujasdelivery.ui.DashboardScreen
 import com.example.pujasdelivery.ui.theme.PujasDeliveryTheme
@@ -43,15 +44,12 @@ import com.example.pujasdelivery.ui.courier.ProfileCourierScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
-
 class MainActivity : ComponentActivity() {
     private val viewModel: DashboardViewModel by viewModels()
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
 
         val role = intent.getStringExtra("role")
         val startDestination = when (role) {
@@ -60,24 +58,32 @@ class MainActivity : ComponentActivity() {
         }
         Log.d("MainActivity", "Starting with role: $role, destination: $startDestination")
 
-
         setContent {
             val navController = rememberNavController()
             PujasDeliveryTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    NavigationSetup(navController = navController, viewModel = viewModel, startDestination = startDestination)
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    NavigationSetup(
+                        navController = navController,
+                        viewModel = viewModel,
+                        startDestination = startDestination
+                    )
                 }
             }
         }
     }
 }
 
-
 @Composable
-fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewModel, startDestination: String) {
+fun NavigationSetup(
+    navController: NavHostController,
+    viewModel: DashboardViewModel,
+    startDestination: String
+) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-
 
     Scaffold(
         bottomBar = {
@@ -116,7 +122,7 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
             }
             composable("category/{category}") { backStackEntry ->
                 val category = backStackEntry.arguments?.getString("category") ?: "Makanan"
-                CategoryScreen(category = category, viewModel = viewModel, navController = navController)
+                CategoryScreen(category = category, viewModel, navController)
             }
             composable("menuDetail/{menuName}") { backStackEntry ->
                 val menuName = backStackEntry.arguments?.getString("menuName") ?: ""
@@ -132,23 +138,26 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
                     viewModel = viewModel
                 )
             }
-            composable("payment") {
+            composable(
+                route = "payment?gedungId={gedungId}",
+                arguments = listOf(navArgument("gedungId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val gedungId = backStackEntry.arguments?.getLong("gedungId")
                 PaymentScreen(
                     navController = navController,
-                    viewModel = viewModel
-                )
-            }
-            composable("orderConfirmation/{orderId}") { backStackEntry ->
-                val orderId = backStackEntry.arguments?.getString("orderId") ?: "1"
-                OrderConfirmationScreen(
-                    navController = navController,
                     viewModel = viewModel,
-                    orderId = orderId
+                    gedungId = gedungId
                 )
             }
-            composable("orderConfirmation?cancel={cancel}") { backStackEntry ->
-                val cancel = backStackEntry.arguments?.getString("cancel")?.toBoolean() ?: false
+            composable(
+                route = "orderConfirmation/{orderId}?cancel={cancel}",
+                arguments = listOf(
+                    navArgument("orderId") { type = NavType.StringType },
+                    navArgument("cancel") { type = NavType.BoolType; defaultValue = false }
+                )
+            ) { backStackEntry ->
                 val orderId = backStackEntry.arguments?.getString("orderId") ?: "1"
+                val cancel = backStackEntry.arguments?.getBoolean("cancel") ?: false
                 OrderConfirmationScreen(
                     navController = navController,
                     viewModel = viewModel,
@@ -182,19 +191,16 @@ fun NavigationSetup(navController: NavHostController, viewModel: DashboardViewMo
     }
 }
 
-
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-
 
     val items = listOf(
         "Beranda" to Icons.Default.Home,
         "Pesanan" to Icons.Default.ShoppingCart,
         "Profil" to Icons.Default.Person
     )
-
 
     NavigationBar(
         modifier = Modifier
@@ -253,23 +259,20 @@ fun BottomNavigationBar(navController: NavHostController) {
     }
 }
 
-
 @Composable
 fun CourierBottomNavigationBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-
 
     val items = listOf(
         "Pesanan" to Icons.Default.ShoppingCart,
         "Profil" to Icons.Default.Person
     )
 
-
     NavigationBar(
         modifier = Modifier
             .padding(horizontal = 12.dp, vertical = 8.dp)
-            .shadow(4.dp, shape = RoundedCornerShape(16.dp))
+            .shadow(4.dp, shape = RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(16.dp)),
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary
