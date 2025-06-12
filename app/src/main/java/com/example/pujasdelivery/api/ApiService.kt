@@ -3,6 +3,7 @@ package com.example.pujasdelivery.api
 import com.example.pujasdelivery.data.RegisterRequest
 import com.example.pujasdelivery.data.RegisterResponse
 import com.example.pujasdelivery.data.TransactionResponse
+import com.example.pujasdelivery.data.TransactionStatusRequest
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Call
@@ -37,4 +38,21 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Call<TransactionResponse>
+
+    @GET("api/transactions/courier/ongoing")
+    suspend fun getCourierOngoingTransactions(
+        @Header("Authorization") token: String
+    ): List<TransactionResponse>
+
+    @GET("api/transactions/courier/history")
+    suspend fun getCourierHistoryTransactions(
+        @Header("Authorization") token: String
+    ): List<TransactionResponse>
+
+    @PUT("api/transactions/{id}/status")
+    suspend fun updateTransactionStatus(
+        @Header("Authorization") token: String,
+        @Path("id") transactionId: Int,
+        @Body statusRequest: TransactionStatusRequest
+    ): TransactionResponse
 }

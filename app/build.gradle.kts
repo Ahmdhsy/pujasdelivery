@@ -109,4 +109,13 @@ dependencies {
 
     // Resolusi konflik versi Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // Koin untuk Dependency Injection
+    implementation ("io.insert-koin:koin-android:3.5.0")
+    implementation ("io.insert-koin:koin-androidx-compose:3.5.0")
+
+    // Pastikan juga dependensi Compose dan Lifecycle
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+    implementation ("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
+    implementation ("androidx.compose.runtime:runtime-livedata:1.6.0")// Untuk mendukung LiveData di Compose
 }
