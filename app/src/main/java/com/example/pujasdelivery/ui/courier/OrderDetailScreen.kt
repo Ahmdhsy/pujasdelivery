@@ -48,9 +48,20 @@ fun OrderDetailScreen(
     var transaction by remember { mutableStateOf<TransactionData?>(null) }
     var showConfirmationDialog by remember { mutableStateOf(false) }
     var showSuccessDialog by remember { mutableStateOf(false) }
-    var showCancelConfirmation by remember { mutableStateOf(false) } // Untuk konfirmasi pembatalan
     var isUpdating by remember { mutableStateOf(false) }
 
+    // Perbarui transaction berdasarkan data terbaru dari state flow
+    LaunchedEffect(ongoingTransactions, historyTransactions) {
+        coroutineScope.launch {
+            val allTransactions = ongoingTransactions + historyTransactions
+            transaction = allTransactions.find { it.id.toString() == orderId }
+            if (transaction == null) {
+                Log.e("OrderDetailScreen", "Transaction with orderId $orderId not found after update")
+            }
+        }
+    }
+
+    // Inisialisasi awal
     LaunchedEffect(orderId) {
         coroutineScope.launch {
             Log.d("OrderDetailScreen", "Menus size: ${menus.size}, Menus: $menus")
@@ -91,7 +102,14 @@ fun OrderDetailScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = { navController.popBackStack() },
+                    onClick = {
+                        // Memuat ulang data sebelum kembali untuk memastikan status terbaru
+                        coroutineScope.launch {
+                            viewModel.loadOngoingTransactions()
+                            viewModel.loadHistoryTransactions()
+                        }
+                        navController.popBackStack()
+                    },
                     modifier = Modifier
                         .size(40.dp)
                         .background(Color.LightGray.copy(alpha = 0.2f), shape = RoundedCornerShape(12.dp))
@@ -99,7 +117,7 @@ fun OrderDetailScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onBackground,
+                        tint = Color(0xFF2C3755), // Warna ikon sesuai permintaan
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -260,13 +278,12 @@ fun OrderDetailScreen(
                                 }
                             }
 
-                            // Tampilkan tombol status dan "Batalkan Pesanan" hanya jika status bukan "selesai" atau "dibatalkan"
                             if (currentTransaction.status.lowercase() !in listOf("selesai", "dibatalkan")) {
                                 Spacer(modifier = Modifier.height(16.dp))
                                 val nextStatus = when (currentTransaction.status.lowercase()) {
-                                    "diterima" -> "Diproses"
-                                    "diproses" -> "Dalam Pengantaran"
-                                    "dalam pengantaran" -> "Selesai"
+                                    "diterima" -> "diproses"
+                                    "diproses" -> "dalam pengantaran"
+                                    "dalam pengantaran" -> "selesai"
                                     else -> null
                                 }
 
@@ -274,17 +291,26 @@ fun OrderDetailScreen(
                                     Button(
                                         onClick = {
                                             isUpdating = true
-                                            coroutineScope.launch {
-                                                viewModel.updateTransactionStatus(currentTransaction.id, nextStatus.lowercase())
-                                                delay(1000) // Simulasi waktu API
-                                                isUpdating = false
+                                            if (nextStatus == "selesai") {
+                                                showConfirmationDialog = true // Hanya konfirmasi untuk "Selesai"
+                                            } else {
+                                                coroutineScope.launch {
+                                                    currentTransaction?.let {
+                                                        viewModel.updateTransactionStatus(it.id, nextStatus)
+                                                        delay(1000) // Simulasi waktu API
+                                                        // Perbarui transaction lokal setelah status berubah
+                                                        val allTransactions = ongoingTransactions + historyTransactions
+                                                        transaction = allTransactions.find { tx -> tx.id.toString() == orderId }
+                                                        isUpdating = false
+                                                    }
+                                                }
                                             }
                                         },
                                         enabled = !isUpdating,
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(50.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C4B4))
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C3755)) // Warna tombol diubah ke 0xFF2C3755
                                     ) {
                                         if (isUpdating) {
                                             CircularProgressIndicator(
@@ -292,21 +318,11 @@ fun OrderDetailScreen(
                                                 color = MaterialTheme.colorScheme.onPrimary
                                             )
                                         } else {
-                                            Text(nextStatus)
+                                            Text(
+                                                text = nextStatus.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                                            )
                                         }
                                     }
-                                }
-
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Button(
-                                    onClick = { showCancelConfirmation = true },
-                                    enabled = !isUpdating,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(50.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                                ) {
-                                    Text("Batalkan Pesanan", color = Color.White)
                                 }
                             }
                         }
@@ -315,95 +331,105 @@ fun OrderDetailScreen(
             }
         }
 
+        // Dialog Konfirmasi Penyelesaian Pesanan
         if (showConfirmationDialog) {
-            if (showSuccessDialog) {
-                Dialog(
-                    onDismissRequest = { showSuccessDialog = false },
+            Dialog(
+                onDismissRequest = { showConfirmationDialog = false }
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .shadow(8.dp, shape = RoundedCornerShape(16.dp)),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Card(
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth(0.85f)
-                            .shadow(8.dp, shape = RoundedCornerShape(16.dp)),
-                        shape = RoundedCornerShape(16.dp)
+                            .padding(24.dp)
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(24.dp)
-                                .fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        Text(
+                            text = "Anda yakin ingin menyelesaikan pesanan?",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "Jika pesanan diselesaikan, Anda tidak dapat melihat Detail Pesanan kembali",
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Text(
-                                text = "Pesanan berhasi diselesaikan!",
-                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = { showConfirmationDialog = false },
+                                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                            ) {
+                                Text("Tidak")
+                            }
                             Button(
                                 onClick = {
-                                    showSuccessDialog = false
-                                    navController.popBackStack()
+                                    showConfirmationDialog = false
+                                    isUpdating = true
+                                    coroutineScope.launch {
+                                        currentTransaction?.let {
+                                            viewModel.updateTransactionStatus(it.id, "selesai")
+                                            delay(1000) // Simulasi waktu API
+                                            // Perbarui transaction lokal setelah status berubah
+                                            val allTransactions = ongoingTransactions + historyTransactions
+                                            transaction = allTransactions.find { tx -> tx.id.toString() == orderId }
+                                            isUpdating = false
+                                            showSuccessDialog = true // Tampilkan dialog sukses
+                                        }
+                                    }
                                 },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C4B4))
+                                modifier = Modifier.weight(1f).padding(start = 8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C3755)) // Warna tombol "Ya"
                             ) {
-                                Text("OK")
+                                Text("Ya", color = Color.White)
                             }
                         }
                     }
                 }
             }
+        }
 
-            if (showCancelConfirmation) {
-                Dialog(
-                    onDismissRequest = { showCancelConfirmation = false },
+        // Dialog Sukses Penyelesaian Pesanan
+        if (showSuccessDialog) {
+            Dialog(
+                onDismissRequest = { showSuccessDialog = false }
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .shadow(8.dp, shape = RoundedCornerShape(16.dp)),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Card(
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth(0.85f)
-                            .shadow(8.dp, shape = RoundedCornerShape(16.dp)),
-                        shape = RoundedCornerShape(16.dp)
+                            .padding(24.dp)
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(24.dp)
-                                .fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        Text(
+                            text = "Pesanan berhasil diselesaikan!",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = {
+                                showSuccessDialog = false
+                                navController.popBackStack()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C3755))
                         ) {
-                            Text(
-                                text = "Anda yakin ingin membatalkan pesanan?",
-                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
-                                Button(
-                                    onClick = { showCancelConfirmation = false },
-                                    modifier = Modifier.weight(1f).padding(end = 8.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
-                                ) {
-                                    Text("Tidak")
-                                }
-                                Button(
-                                    onClick = {
-                                        showCancelConfirmation = false
-                                        isUpdating = true
-                                        coroutineScope.launch {
-                                            currentTransaction?.let {
-                                                viewModel.updateTransactionStatus(it.id, "dibatalkan")
-                                                delay(1000) // Simulasi waktu API
-                                                isUpdating = false
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier.weight(1f).padding(start = 8.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                                ) {
-                                    Text("Ya", color = Color.White)
-                                }
-                            }
+                            Text("OK", color = Color.White)
                         }
                     }
                 }
