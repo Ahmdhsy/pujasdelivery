@@ -4,6 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pujasdelivery.api.ApiService
+import com.example.pujasdelivery.api.MenuApiService
+import com.example.pujasdelivery.data.Menu
+import com.example.pujasdelivery.data.Tenant
 import com.example.pujasdelivery.data.TransactionData
 import com.example.pujasdelivery.data.TransactionResponse
 import com.example.pujasdelivery.data.TransactionStatusRequest
@@ -13,7 +16,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.io.IOException
 
 enum class LoadingState {
@@ -22,15 +27,32 @@ enum class LoadingState {
     ERROR
 }
 
-class CourierViewModel(private val apiService: ApiService) : ViewModel() {
+class CourierViewModel(
+    private val apiService: ApiService,
+    private val menuApiService: MenuApiService
+) : ViewModel() {
     private val _ongoingTransactions = MutableStateFlow<List<TransactionData>>(emptyList())
     val ongoingTransactions: StateFlow<List<TransactionData>> = _ongoingTransactions.asStateFlow()
 
     private val _historyTransactions = MutableStateFlow<List<TransactionData>>(emptyList())
     val historyTransactions: StateFlow<List<TransactionData>> = _historyTransactions.asStateFlow()
 
+    private val _menus = MutableStateFlow<List<Menu>>(emptyList())
+    val menus: StateFlow<List<Menu>> = _menus.asStateFlow()
+
+    private val _tenants = MutableStateFlow<List<Tenant>>(emptyList()) // Tambahkan StateFlow untuk tenant
+    val tenants: StateFlow<List<Tenant>> = _tenants.asStateFlow()
+
     private val _loadingState = MutableStateFlow(LoadingState.LOADING)
     val loadingState: StateFlow<LoadingState> = _loadingState.asStateFlow()
+
+    init {
+        Log.d("CourierViewModel", "Initializing ViewModel")
+        loadMenus()
+        loadTenants() // Tambahkan pemanggilan loadTenants
+        loadOngoingTransactions()
+        loadHistoryTransactions()
+    }
 
     private suspend fun waitForToken(): String? {
         var token = MyApplication.token
@@ -60,19 +82,8 @@ class CourierViewModel(private val apiService: ApiService) : ViewModel() {
                 val response = apiService.getCourierOngoingTransactions(token)
                 _ongoingTransactions.value = response.map { it.data }
                 _loadingState.value = LoadingState.SUCCESS
-            } catch (e: HttpException) {
-                Log.e("CourierViewModel", "HTTP Error loading ongoing transactions: ${e.code()} - ${e.message()}", e)
-                val errorBody = e.response()?.errorBody()?.string()
-                Log.e("CourierViewModel", "Response body: $errorBody")
-                if (errorBody?.contains("<html") == true) {
-                    Log.e("CourierViewModel", "Server returned HTML error page, check backend logs")
-                }
-                _loadingState.value = LoadingState.ERROR
-            } catch (e: IOException) {
-                Log.e("CourierViewModel", "Network error loading ongoing transactions: ${e.message}", e)
-                _loadingState.value = LoadingState.ERROR
             } catch (e: Exception) {
-                Log.e("CourierViewModel", "Unexpected error loading ongoing transactions: ${e.message}", e)
+                Log.e("CourierViewModel", "Error loading ongoing transactions: ${e.message}", e)
                 _loadingState.value = LoadingState.ERROR
             }
         }
@@ -91,19 +102,68 @@ class CourierViewModel(private val apiService: ApiService) : ViewModel() {
                 val response = apiService.getCourierHistoryTransactions(token)
                 _historyTransactions.value = response.map { it.data }
                 _loadingState.value = LoadingState.SUCCESS
-            } catch (e: HttpException) {
-                Log.e("CourierViewModel", "HTTP Error loading history transactions: ${e.code()} - ${e.message()}", e)
-                val errorBody = e.response()?.errorBody()?.string()
-                Log.e("CourierViewModel", "Response body: $errorBody")
-                if (errorBody?.contains("<html") == true) {
-                    Log.e("CourierViewModel", "Server returned HTML error page, check backend logs")
-                }
-                _loadingState.value = LoadingState.ERROR
-            } catch (e: IOException) {
-                Log.e("CourierViewModel", "Network error loading history transactions: ${e.message}", e)
-                _loadingState.value = LoadingState.ERROR
             } catch (e: Exception) {
-                Log.e("CourierViewModel", "Unexpected error loading history: ${e.message}", e)
+                Log.e("CourierViewModel", "Error loading history transactions: ${e.message}", e)
+                _loadingState.value = LoadingState.ERROR
+            }
+        }
+    }
+
+    fun loadMenus() {
+        viewModelScope.launch {
+            _loadingState.value = LoadingState.LOADING
+            try {
+                Log.d("CourierViewModel", "Calling getMenus")
+                val call = menuApiService.getMenus()
+                call.enqueue(object : Callback<List<Menu>> {
+                    override fun onResponse(call: Call<List<Menu>>, response: Response<List<Menu>>) {
+                        if (response.isSuccessful) {
+                            _menus.value = response.body() ?: emptyList()
+                            Log.d("CourierViewModel", "Menus loaded: ${response.body()}")
+                            _loadingState.value = LoadingState.SUCCESS
+                        } else {
+                            Log.e("CourierViewModel", "Failed to load menus: ${response.code()} - ${response.message()}")
+                            _loadingState.value = LoadingState.ERROR
+                        }
+                    }
+
+                    override fun onFailure(call: Call<List<Menu>>, t: Throwable) {
+                        Log.e("CourierViewModel", "Network error loading menus: ${t.message}", t)
+                        _loadingState.value = LoadingState.ERROR
+                    }
+                })
+            } catch (e: Exception) {
+                Log.e("CourierViewModel", "Unexpected error loading menus: ${e.message}", e)
+                _loadingState.value = LoadingState.ERROR
+            }
+        }
+    }
+
+    fun loadTenants() { // Fungsi baru untuk memuat tenant
+        viewModelScope.launch {
+            _loadingState.value = LoadingState.LOADING
+            try {
+                Log.d("CourierViewModel", "Calling getTenants")
+                val call = menuApiService.getTenants()
+                call.enqueue(object : Callback<List<Tenant>> {
+                    override fun onResponse(call: Call<List<Tenant>>, response: Response<List<Tenant>>) {
+                        if (response.isSuccessful) {
+                            _tenants.value = response.body() ?: emptyList()
+                            Log.d("CourierViewModel", "Tenants loaded: ${response.body()}")
+                            _loadingState.value = LoadingState.SUCCESS
+                        } else {
+                            Log.e("CourierViewModel", "Failed to load tenants: ${response.code()} - ${response.message()}")
+                            _loadingState.value = LoadingState.ERROR
+                        }
+                    }
+
+                    override fun onFailure(call: Call<List<Tenant>>, t: Throwable) {
+                        Log.e("CourierViewModel", "Network error loading tenants: ${t.message}", t)
+                        _loadingState.value = LoadingState.ERROR
+                    }
+                })
+            } catch (e: Exception) {
+                Log.e("CourierViewModel", "Unexpected error loading tenants: ${e.message}", e)
                 _loadingState.value = LoadingState.ERROR
             }
         }
@@ -122,19 +182,8 @@ class CourierViewModel(private val apiService: ApiService) : ViewModel() {
                 apiService.updateTransactionStatus(token, transactionId, statusRequest)
                 loadOngoingTransactions()
                 loadHistoryTransactions()
-            } catch (e: HttpException) {
-                Log.e("CourierViewModel", "HTTP Error updating status: ${e.code()} - ${e.message()}", e)
-                val errorBody = e.response()?.errorBody()?.string()
-                Log.e("CourierViewModel", "Response body: $errorBody")
-                if (errorBody?.contains("<html") == true) {
-                    Log.e("CourierViewModel", "Server returned HTML error page, check backend logs")
-                }
-                _loadingState.value = LoadingState.ERROR
-            } catch (e: IOException) {
-                Log.e("CourierViewModel", "Network error updating status: ${e.message}", e)
-                _loadingState.value = LoadingState.ERROR
             } catch (e: Exception) {
-                Log.e("CourierViewModel", "Unexpected error updating status: ${e.message}", e)
+                Log.e("CourierViewModel", "Error updating status: ${e.message}", e)
                 _loadingState.value = LoadingState.ERROR
             }
         }

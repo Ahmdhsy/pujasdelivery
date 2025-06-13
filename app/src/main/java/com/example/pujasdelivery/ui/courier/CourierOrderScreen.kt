@@ -21,7 +21,6 @@ import androidx.navigation.NavController
 import com.example.pujasdelivery.data.TransactionData
 import com.example.pujasdelivery.viewmodel.CourierViewModel
 import com.example.pujasdelivery.viewmodel.LoadingState
-import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -32,6 +31,7 @@ fun CourierOrderScreen(
     val ongoingTransactions by viewModel.ongoingTransactions.collectAsState()
     val historyTransactions by viewModel.historyTransactions.collectAsState()
     val loadingState by viewModel.loadingState.collectAsState()
+    val tenants by viewModel.tenants.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
 
     Column {
@@ -96,11 +96,8 @@ fun CourierOrderScreen(
                         items(transactions) { transaction ->
                             TransactionCard(
                                 transaction = transaction,
-                                onUpdateStatus = { newStatus ->
-                                    viewModel.updateTransactionStatus(transaction.id, newStatus)
-                                },
-                                isHistory = selectedTab == 1,
-                                navController = navController
+                                navController = navController,
+                                tenants = tenants
                             )
                         }
                     }
@@ -121,14 +118,12 @@ fun CourierOrderScreen(
 @Composable
 fun TransactionCard(
     transaction: TransactionData,
-    onUpdateStatus: (String) -> Unit,
-    isHistory: Boolean,
-    navController: NavController
+    navController: NavController,
+    tenants: List<com.example.pujasdelivery.data.Tenant>
 ) {
-    var isUpdating by remember { mutableStateOf(false) }
-    var expanded by remember { mutableStateOf(false) }
-
-    val tenantName = "Warung ${transaction.tenantId.toString().padStart(2, '0')}"
+    // Map tenantId ke nama tenant
+    val tenant = tenants.find { it.id == transaction.tenantId }
+    val tenantName = tenant?.name ?: "Warung ${transaction.tenantId.toString().padStart(2, '0')}"
     val itemsText = transaction.items.joinToString(", ") { "${it.quantity} Menu ${it.menuId}" }
 
     Card(
@@ -168,6 +163,12 @@ fun TransactionCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
+                    text = "ID Transaksi: ${transaction.id}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
                     text = transaction.status.replaceFirstChar { it.uppercase() },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
@@ -187,59 +188,6 @@ fun TransactionCard(
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.primary
             )
-        }
-
-        if (!isHistory) {
-            val nextStatusOptions = when (transaction.status) {
-                "diterima" -> listOf("diproses", "dibatalkan")
-                "diproses" -> listOf("dalam pengantaran", "dibatalkan")
-                "dalam pengantaran" -> listOf("selesai", "dibatalkan")
-                else -> emptyList()
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                Button(
-                    onClick = { expanded = true },
-                    enabled = nextStatusOptions.isNotEmpty() && !isUpdating,
-                    modifier = Modifier.align(Alignment.Bottom)
-                ) {
-                    if (isUpdating) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
-                        Text("Ubah Status")
-                    }
-                }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    nextStatusOptions.forEach { status ->
-                        DropdownMenuItem(
-                            text = { Text(status.replaceFirstChar { it.uppercase() }) },
-                            onClick = {
-                                isUpdating = true
-                                onUpdateStatus(status)
-                                expanded = false
-                            }
-                        )
-                    }
-                    LaunchedEffect(isUpdating) {
-                        if (isUpdating) {
-                            delay(1000) // Simulasi waktu API
-                            isUpdating = false
-                        }
-                    }
-                }
-            }
         }
     }
 }

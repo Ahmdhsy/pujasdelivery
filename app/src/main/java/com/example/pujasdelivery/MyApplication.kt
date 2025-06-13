@@ -21,7 +21,8 @@ class MyApplication : Application() {
             modules(
                 module {
                     single { RetrofitClient.apiService as ApiService }
-                    factory { CourierViewModel(get()) }
+                    single { RetrofitClient.menuApiService } // Tambahkan menuApiService ke modul Koin
+                    factory { CourierViewModel(get(), get()) } // Perbarui untuk menerima dua dependensi
                 }
             )
         }

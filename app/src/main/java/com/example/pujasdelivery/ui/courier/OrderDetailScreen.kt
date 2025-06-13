@@ -8,7 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,32 +23,39 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
+import com.example.pujasdelivery.data.Menu
 import com.example.pujasdelivery.data.TransactionData
+import com.example.pujasdelivery.data.TransactionItem
 import com.example.pujasdelivery.viewmodel.CourierViewModel
 import com.example.pujasdelivery.viewmodel.LoadingState
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun OrderDetailScreen(
     navController: NavHostController,
     viewModel: CourierViewModel = koinViewModel(),
-    orderId: String // Pastikan parameter ini sesuai dengan NavType.StringType
+    orderId: String
 ) {
     val ongoingTransactions by viewModel.ongoingTransactions.collectAsState()
     val historyTransactions by viewModel.historyTransactions.collectAsState()
     val loadingState by viewModel.loadingState.collectAsState()
+    val menus by viewModel.menus.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     var transaction by remember { mutableStateOf<TransactionData?>(null) }
     var showConfirmationDialog by remember { mutableStateOf(false) }
     var showSuccessDialog by remember { mutableStateOf(false) }
-    var showErrorDialog by remember { mutableStateOf(false) }
+    var showCancelConfirmation by remember { mutableStateOf(false) } // Untuk konfirmasi pembatalan
+    var isUpdating by remember { mutableStateOf(false) }
 
-    // Load transaction details based on orderId
     LaunchedEffect(orderId) {
         coroutineScope.launch {
+            Log.d("OrderDetailScreen", "Menus size: ${menus.size}, Menus: $menus")
+            if (menus.isEmpty()) {
+                viewModel.loadMenus()
+            }
             val allTransactions = ongoingTransactions + historyTransactions
-            // Pastikan perbandingan dilakukan dengan konversi yang konsisten
             transaction = allTransactions.find { it.id.toString() == orderId }
             if (transaction == null) {
                 viewModel.loadOngoingTransactions()
@@ -61,10 +68,8 @@ fun OrderDetailScreen(
         }
     }
 
-    // Use a local variable to avoid smart-cast issue
     val currentTransaction = transaction
 
-    // Main content
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -73,7 +78,6 @@ fun OrderDetailScreen(
                 .fillMaxSize()
                 .padding(vertical = 16.dp)
         ) {
-            // Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -88,22 +92,33 @@ fun OrderDetailScreen(
                         .background(Color.LightGray.copy(alpha = 0.2f), shape = RoundedCornerShape(12.dp))
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.size(24.dp)
                     )
                 }
-                Text(
-                    text = "Detail Pesanan",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground,
+                Column(
                     modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
-                )
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Detail Pesanan",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        textAlign = TextAlign.Center
+                    )
+                    if (currentTransaction != null) {
+                        Text(
+                            text = "ID Transaksi: ${currentTransaction.id}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.size(40.dp))
             }
 
@@ -151,26 +166,24 @@ fun OrderDetailScreen(
                                 .fillMaxSize()
                                 .padding(horizontal = 16.dp)
                         ) {
-                            // Delivery Address and Receiver
                             Text(
                                 text = "Alamat Gedung Pengantaran",
                                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Gedung ${currentTransaction.gedungId ?: "H"}",
+                                text = "Gedung ${currentTransaction.gedungId}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.secondary
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Nama Penerima: User ${currentTransaction.userId ?: "Unknown"}",
+                                text = "Nama Penerima: User ${currentTransaction.userId}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.secondary
                             )
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Total Order
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -180,25 +193,24 @@ fun OrderDetailScreen(
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                                 )
                                 Text(
-                                    text = "Rp${currentTransaction.totalPrice}",
+                                    text = "Rp${String.format("%.0f", currentTransaction.totalPrice)}",
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Items
                             LazyColumn(
-                                modifier = Modifier
-                                    .weight(1f),
+                                modifier = Modifier.weight(1f),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 items(currentTransaction.items) { item ->
+                                    val menu = menus.find { it.id == item.menuId }
                                     ItemCard(
-                                        item = item
+                                        item = item,
+                                        menuName = menu?.name ?: "Menu ${item.menuId}"
                                     )
                                 }
-                                // Payment Proof Section
                                 item {
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Card(
@@ -222,7 +234,7 @@ fun OrderDetailScreen(
                                                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                                             )
                                             Spacer(modifier = Modifier.height(8.dp))
-                                            if (currentTransaction.buktiPembayaran != null) {
+                                            if (currentTransaction.buktiPembayaran.isNotEmpty()) {
                                                 Image(
                                                     painter = rememberAsyncImagePainter("http://10.0.2.2:8000/${currentTransaction.buktiPembayaran}"),
                                                     contentDescription = "Payment Proof",
@@ -242,22 +254,52 @@ fun OrderDetailScreen(
                                 }
                             }
 
-                            // Complete Order Button (hidden if status is "Selesai")
-                            if (currentTransaction.status != "Selesai") {
+                            if (currentTransaction.status != "Selesai" && currentTransaction.status != "Dibatalkan") {
                                 Spacer(modifier = Modifier.height(16.dp))
+                                val nextStatus = when (currentTransaction.status) {
+                                    "diterima" -> "Diproses"
+                                    "diproses" -> "Dalam Pengantaran"
+                                    "dalam pengantaran" -> "Selesai"
+                                    else -> null
+                                }
+
+                                if (nextStatus != null) {
+                                    Button(
+                                        onClick = {
+                                            isUpdating = true
+                                            coroutineScope.launch {
+                                                viewModel.updateTransactionStatus(currentTransaction.id, nextStatus.lowercase())
+                                                delay(1000) // Simulasi waktu API
+                                                isUpdating = false
+                                            }
+                                        },
+                                        enabled = !isUpdating,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(50.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C4B4))
+                                    ) {
+                                        if (isUpdating) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(24.dp),
+                                                color = MaterialTheme.colorScheme.onPrimary
+                                            )
+                                        } else {
+                                            Text(nextStatus)
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Button(
-                                    onClick = {
-                                        showConfirmationDialog = true
-                                    },
+                                    onClick = { showCancelConfirmation = true },
+                                    enabled = !isUpdating,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(50.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C4B4))
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
                                 ) {
-                                    Text(
-                                        text = "Selesaikan pesanan",
-                                        color = MaterialTheme.colorScheme.onPrimary
-                                    )
+                                    Text("Batalkan Pesanan", color = Color.White)
                                 }
                             }
                         }
@@ -266,7 +308,6 @@ fun OrderDetailScreen(
             }
         }
 
-        // Confirmation Dialog
         if (showConfirmationDialog) {
             if (showSuccessDialog) {
                 Dialog(
@@ -305,9 +346,9 @@ fun OrderDetailScreen(
                 }
             }
 
-            if (showErrorDialog) {
+            if (showCancelConfirmation) {
                 Dialog(
-                    onDismissRequest = { showErrorDialog = false },
+                    onDismissRequest = { showCancelConfirmation = false },
                 ) {
                     Card(
                         modifier = Modifier
@@ -322,7 +363,7 @@ fun OrderDetailScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "Anda yakin ingin menyelesaikan pesanan?",
+                                text = "Anda yakin ingin membatalkan pesanan?",
                                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                                 textAlign = TextAlign.Center
                             )
@@ -332,7 +373,7 @@ fun OrderDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceEvenly
                             ) {
                                 Button(
-                                    onClick = { showErrorDialog = false },
+                                    onClick = { showCancelConfirmation = false },
                                     modifier = Modifier.weight(1f).padding(end = 8.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
                                 ) {
@@ -340,87 +381,21 @@ fun OrderDetailScreen(
                                 }
                                 Button(
                                     onClick = {
-                                        showErrorDialog = false
+                                        showCancelConfirmation = false
+                                        isUpdating = true
                                         coroutineScope.launch {
                                             currentTransaction?.let {
-                                                viewModel.updateTransactionStatus(it.id, "Selesai")
-                                                showSuccessDialog = true
+                                                viewModel.updateTransactionStatus(it.id, "dibatalkan")
+                                                delay(1000) // Simulasi waktu API
+                                                isUpdating = false
                                             }
                                         }
                                     },
                                     modifier = Modifier.weight(1f).padding(start = 8.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C4B4))
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
                                 ) {
-                                    Text("Ya")
+                                    Text("Ya", color = Color.White)
                                 }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth(0.85f)
-                        .shadow(8.dp, shape = RoundedCornerShape(16.dp)),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(24.dp)
-                            .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Apakah Anda yakin ingin menyelesaikan pesanan ini?",
-                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Button(
-                                onClick = { showConfirmationDialog = false },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(end = 8.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.Gray
-                                )
-                            ) {
-                                Text(
-                                    text = "Tidak",
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                            Button(
-                                onClick = {
-                                    showConfirmationDialog = false
-                                    showErrorDialog = true
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(start = 8.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF00C4B4)
-                                )
-                            ) {
-                                Text(
-                                    text = "Ya",
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
                             }
                         }
                     }
@@ -432,9 +407,9 @@ fun OrderDetailScreen(
 
 @Composable
 fun ItemCard(
-    item: com.example.pujasdelivery.data.TransactionItem
+    item: com.example.pujasdelivery.data.TransactionItem,
+    menuName: String
 ) {
-    val subtotal = item.subtotal
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -462,7 +437,7 @@ fun ItemCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = "Menu ${item.menuId}",
+                    text = menuName,
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -472,6 +447,7 @@ fun ItemCard(
                     color = MaterialTheme.colorScheme.secondary
                 )
                 if (item.catatan != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Catatan: ${item.catatan}",
                         style = MaterialTheme.typography.bodySmall,
@@ -481,7 +457,7 @@ fun ItemCard(
             }
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = "Rp$subtotal",
+                text = "Rp${String.format("%.0f", item.subtotal)}",
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.align(Alignment.Top)
