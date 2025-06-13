@@ -40,6 +40,7 @@ import com.example.pujasdelivery.ui.screens.CheckoutScreen
 import com.example.pujasdelivery.ui.screens.PaymentScreen
 import com.example.pujasdelivery.ui.screens.OrderConfirmationScreen
 import com.example.pujasdelivery.ui.courier.CourierOrderScreen
+import com.example.pujasdelivery.ui.courier.OrderDetailScreen // Pastikan file ini ada
 import com.example.pujasdelivery.ui.courier.ProfileCourierScreen
 import com.example.pujasdelivery.viewmodel.CourierViewModel
 import org.koin.androidx.compose.getViewModel
@@ -200,6 +201,18 @@ fun NavigationSetup(
             }
             composable("courier_profile") {
                 ProfileCourierScreen(navController = navController)
+            }
+            // Tambahkan rute untuk OrderDetailScreen
+            composable(
+                "orderDetail/{orderId}",
+                arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val orderId = backStackEntry.arguments?.getString("orderId") ?: "0"
+                OrderDetailScreen(
+                    navController = navController,
+                    viewModel = courierViewModel,
+                    orderId = orderId
+                )
             }
         }
     }

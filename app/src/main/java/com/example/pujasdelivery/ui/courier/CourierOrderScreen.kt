@@ -1,8 +1,10 @@
 package com.example.pujasdelivery.ui.courier
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.*
@@ -10,8 +12,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.pujasdelivery.data.TransactionData
@@ -83,14 +87,20 @@ fun CourierOrderScreen(
                         )
                     }
                 } else {
-                    LazyColumn {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         items(transactions) { transaction ->
                             TransactionCard(
                                 transaction = transaction,
                                 onUpdateStatus = { newStatus ->
                                     viewModel.updateTransactionStatus(transaction.id, newStatus)
                                 },
-                                isHistory = selectedTab == 1
+                                isHistory = selectedTab == 1,
+                                navController = navController
                             )
                         }
                     }
@@ -112,121 +122,120 @@ fun CourierOrderScreen(
 fun TransactionCard(
     transaction: TransactionData,
     onUpdateStatus: (String) -> Unit,
-    isHistory: Boolean
+    isHistory: Boolean,
+    navController: NavController
 ) {
     var isUpdating by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
+    val tenantName = "Warung ${transaction.tenantId.toString().padStart(2, '0')}"
+    val itemsText = transaction.items.joinToString(", ") { "${it.quantity} Menu ${it.menuId}" }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            .shadow(4.dp, shape = RoundedCornerShape(12.dp))
+            .clickable {
+                navController.navigate("orderDetail/${transaction.id}")
+            },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Restaurant,
+                contentDescription = "Item",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(
+                modifier = Modifier.weight(1f)
             ) {
-                Icon(
-                    imageVector = when (transaction.status) {
-                        "diterima" -> Icons.Filled.CheckCircle
-                        "diproses" -> Icons.Filled.Restaurant
-                        "dalam pengantaran" -> Icons.AutoMirrored.Filled.DirectionsBike
-                        "selesai" -> Icons.Filled.Done
-                        "dibatalkan" -> Icons.Filled.Cancel
-                        else -> Icons.Filled.Error
-                    },
-                    contentDescription = transaction.status,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Pesanan #${transaction.id}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
+                    text = tenantName,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = transaction.status.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = itemsText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = "Pemesan: User ID ${transaction.userId}",
-                style = MaterialTheme.typography.bodyMedium
+                text = "Rp${transaction.totalPrice}",
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.primary
             )
-            Text(
-                text = "Total: Rp ${transaction.totalPrice}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = "Bukti Pembayaran: ${transaction.buktiPembayaran.split("/").last()}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = "Status: ${transaction.status.replaceFirstChar { it.uppercase() }}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Detail Pesanan:",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
-            )
-            transaction.items.forEach { item ->
-                Text(
-                    text = "- Menu ID ${item.menuId} (x${item.quantity}): Rp ${item.subtotal}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                if (item.catatan != null) {
-                    Text(
-                        text = "  Catatan: ${item.catatan}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
-                }
+        }
+
+        if (!isHistory) {
+            val nextStatusOptions = when (transaction.status) {
+                "diterima" -> listOf("diproses", "dibatalkan")
+                "diproses" -> listOf("dalam pengantaran", "dibatalkan")
+                "dalam pengantaran" -> listOf("selesai", "dibatalkan")
+                else -> emptyList()
             }
 
-            if (!isHistory) {
-                val nextStatusOptions = when (transaction.status) {
-                    "diterima" -> listOf("diproses", "dibatalkan")
-                    "diproses" -> listOf("dalam pengantaran", "dibatalkan")
-                    "dalam pengantaran" -> listOf("selesai", "dibatalkan")
-                    else -> emptyList()
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = { expanded = true },
-                        enabled = nextStatusOptions.isNotEmpty() && !isUpdating
-                    ) {
-                        if (isUpdating) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        } else {
-                            Text("Ubah Status")
-                        }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Button(
+                    onClick = { expanded = true },
+                    enabled = nextStatusOptions.isNotEmpty() && !isUpdating,
+                    modifier = Modifier.align(Alignment.Bottom)
+                ) {
+                    if (isUpdating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Text("Ubah Status")
                     }
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        nextStatusOptions.forEach { status ->
-                            DropdownMenuItem(
-                                text = { Text(status.replaceFirstChar { it.uppercase() }) },
-                                onClick = {
-                                    isUpdating = true
-                                    onUpdateStatus(status)
-                                    expanded = false
-                                }
-                            )
-                        }
-                        LaunchedEffect(isUpdating) {
-                            if (isUpdating) {
-                                delay(1000) // Simulasi waktu API
-                                isUpdating = false
+                }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    nextStatusOptions.forEach { status ->
+                        DropdownMenuItem(
+                            text = { Text(status.replaceFirstChar { it.uppercase() }) },
+                            onClick = {
+                                isUpdating = true
+                                onUpdateStatus(status)
+                                expanded = false
                             }
+                        )
+                    }
+                    LaunchedEffect(isUpdating) {
+                        if (isUpdating) {
+                            delay(1000) // Simulasi waktu API
+                            isUpdating = false
                         }
                     }
                 }
