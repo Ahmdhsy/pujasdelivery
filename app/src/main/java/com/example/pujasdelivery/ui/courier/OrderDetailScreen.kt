@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
+import com.example.pujasdelivery.data.Gedung
 import com.example.pujasdelivery.data.Menu
 import com.example.pujasdelivery.data.TransactionData
 import com.example.pujasdelivery.data.TransactionItem
@@ -42,6 +43,7 @@ fun OrderDetailScreen(
     val historyTransactions by viewModel.historyTransactions.collectAsState()
     val loadingState by viewModel.loadingState.collectAsState()
     val menus by viewModel.menus.collectAsState()
+    val gedungs by viewModel.gedungs.collectAsState() // Data gedung dari API
     val coroutineScope = rememberCoroutineScope()
     var transaction by remember { mutableStateOf<TransactionData?>(null) }
     var showConfirmationDialog by remember { mutableStateOf(false) }
@@ -54,6 +56,9 @@ fun OrderDetailScreen(
             Log.d("OrderDetailScreen", "Menus size: ${menus.size}, Menus: $menus")
             if (menus.isEmpty()) {
                 viewModel.loadMenus()
+            }
+            if (gedungs.isEmpty()) { // Load gedungs jika kosong
+                viewModel.loadGedungs()
             }
             val allTransactions = ongoingTransactions + historyTransactions
             transaction = allTransactions.find { it.id.toString() == orderId }
@@ -143,7 +148,7 @@ fun OrderDetailScreen(
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.loadOngoingTransactions() }) {
+                        Button(onClick = { viewModel.loadOngoingTransactions(); viewModel.loadHistoryTransactions() }) {
                             Text("Coba Lagi")
                         }
                     }
@@ -171,8 +176,9 @@ fun OrderDetailScreen(
                                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                             )
                             Spacer(modifier = Modifier.height(4.dp))
+                            val gedung = gedungs.find { it.id == currentTransaction.gedungId }
                             Text(
-                                text = "Gedung ${currentTransaction.gedungId}",
+                                text = gedung?.nama_gedung ?: "Gedung ${currentTransaction.gedungId}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.secondary
                             )
@@ -254,9 +260,10 @@ fun OrderDetailScreen(
                                 }
                             }
 
-                            if (currentTransaction.status != "Selesai" && currentTransaction.status != "Dibatalkan") {
+                            // Tampilkan tombol status dan "Batalkan Pesanan" hanya jika status bukan "selesai" atau "dibatalkan"
+                            if (currentTransaction.status.lowercase() !in listOf("selesai", "dibatalkan")) {
                                 Spacer(modifier = Modifier.height(16.dp))
-                                val nextStatus = when (currentTransaction.status) {
+                                val nextStatus = when (currentTransaction.status.lowercase()) {
                                     "diterima" -> "Diproses"
                                     "diproses" -> "Dalam Pengantaran"
                                     "dalam pengantaran" -> "Selesai"
