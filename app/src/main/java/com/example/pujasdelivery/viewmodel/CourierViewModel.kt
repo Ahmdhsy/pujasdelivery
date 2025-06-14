@@ -89,9 +89,11 @@ class CourierViewModel(
             try {
                 Log.d("CourierViewModel", "Calling getCourierOngoingTransactions with token: $token")
                 val response = apiService.getCourierOngoingTransactions(token)
-                _ongoingTransactions.value = response.map { it.data }
+                // Filter hanya transaksi dengan status "Dalam Pengantaran"
+                val filteredTransactions = response.map { it.data }.filter { it.status.lowercase() == "dalam pengantaran" }
+                _ongoingTransactions.value = filteredTransactions
                 _loadingState.value = LoadingState.SUCCESS
-                Log.d("CourierViewModel", "Ongoing transactions loaded: ${response.size} items")
+                Log.d("CourierViewModel", "Ongoing transactions loaded: ${filteredTransactions.size} items (filtered for 'Dalam Pengantaran')")
             } catch (e: Exception) {
                 Log.e("CourierViewModel", "Error loading ongoing transactions: ${e.message}", e)
                 _loadingState.value = LoadingState.ERROR

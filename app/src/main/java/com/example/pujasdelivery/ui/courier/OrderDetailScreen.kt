@@ -50,18 +50,19 @@ fun OrderDetailScreen(
     var showSuccessDialog by remember { mutableStateOf(false) }
     var isUpdating by remember { mutableStateOf(false) }
 
-    // Perbarui transaction berdasarkan data terbaru dari state flow
+    // Perbarui transaction berdasarkan data terbaru dari state flow, tanpa filter status
     LaunchedEffect(ongoingTransactions, historyTransactions) {
         coroutineScope.launch {
             val allTransactions = ongoingTransactions + historyTransactions
             transaction = allTransactions.find { it.id.toString() == orderId }
             if (transaction == null) {
-                Log.e("OrderDetailScreen", "Transaction with orderId $orderId not found after update")
+                Log.e("OrderDetailScreen", "Transaction with orderId $orderId not found")
+                navController.popBackStack() // Kembali ke layar sebelumnya jika tidak ditemukan
             }
         }
     }
 
-    // Inisialisasi awal
+    // Inisialisasi awal, tanpa filter status
     LaunchedEffect(orderId) {
         coroutineScope.launch {
             Log.d("OrderDetailScreen", "Menus size: ${menus.size}, Menus: $menus")
@@ -79,6 +80,7 @@ fun OrderDetailScreen(
                 transaction = (ongoingTransactions + historyTransactions).find { it.id.toString() == orderId }
                 if (transaction == null) {
                     Log.e("OrderDetailScreen", "Transaction with orderId $orderId not found")
+                    navController.popBackStack() // Kembali ke layar sebelumnya jika tidak ditemukan
                 }
             }
         }
@@ -117,7 +119,7 @@ fun OrderDetailScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = Color(0xFF2C3755), // Warna ikon sesuai permintaan
+                        tint = Color(0xFF2C3755),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -278,50 +280,27 @@ fun OrderDetailScreen(
                                 }
                             }
 
-                            if (currentTransaction.status.lowercase() !in listOf("selesai", "dibatalkan")) {
+                            // Tombol "Selesai" hanya muncul untuk status "Dalam Pengantaran"
+                            if (currentTransaction.status.lowercase() == "dalam pengantaran") {
                                 Spacer(modifier = Modifier.height(16.dp))
-                                val nextStatus = when (currentTransaction.status.lowercase()) {
-                                    "diterima" -> "diproses"
-                                    "diproses" -> "dalam pengantaran"
-                                    "dalam pengantaran" -> "selesai"
-                                    else -> null
-                                }
-
-                                if (nextStatus != null) {
-                                    Button(
-                                        onClick = {
-                                            isUpdating = true
-                                            if (nextStatus == "selesai") {
-                                                showConfirmationDialog = true // Hanya konfirmasi untuk "Selesai"
-                                            } else {
-                                                coroutineScope.launch {
-                                                    currentTransaction?.let {
-                                                        viewModel.updateTransactionStatus(it.id, nextStatus)
-                                                        delay(1000) // Simulasi waktu API
-                                                        // Perbarui transaction lokal setelah status berubah
-                                                        val allTransactions = ongoingTransactions + historyTransactions
-                                                        transaction = allTransactions.find { tx -> tx.id.toString() == orderId }
-                                                        isUpdating = false
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        enabled = !isUpdating,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(50.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C3755)) // Warna tombol diubah ke 0xFF2C3755
-                                    ) {
-                                        if (isUpdating) {
-                                            CircularProgressIndicator(
-                                                modifier = Modifier.size(24.dp),
-                                                color = MaterialTheme.colorScheme.onPrimary
-                                            )
-                                        } else {
-                                            Text(
-                                                text = nextStatus.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-                                            )
-                                        }
+                                Button(
+                                    onClick = {
+                                        isUpdating = true
+                                        showConfirmationDialog = true
+                                    },
+                                    enabled = !isUpdating,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(50.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C3755))
+                                ) {
+                                    if (isUpdating) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp),
+                                            color = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    } else {
+                                        Text("Selesai")
                                     }
                                 }
                             }
@@ -349,12 +328,12 @@ fun OrderDetailScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Anda yakin ingin menyelesaikan pesanan?",
+                            text = "Anda yakin pesanan telah dikirim?",
                             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = "Jika pesanan diselesaikan, Anda tidak dapat melihat Detail Pesanan kembali",
+                            text = "Jika dikonfirmasi, pesanan akan ditandai selesai dan tidak dapat diubah kembali.",
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.secondary
@@ -388,7 +367,7 @@ fun OrderDetailScreen(
                                     }
                                 },
                                 modifier = Modifier.weight(1f).padding(start = 8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C3755)) // Warna tombol "Ya"
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C3755))
                             ) {
                                 Text("Ya", color = Color.White)
                             }
