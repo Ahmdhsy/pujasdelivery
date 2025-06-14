@@ -14,10 +14,14 @@ data class TransactionData(
     val id: Int,
     @SerializedName("user_id")
     val userId: Int,
-    @SerializedName("tenant_id")
-    val tenantId: Int,
+    @SerializedName("user_name")
+    val userName: String,
     @SerializedName("gedung_id")
     val gedungId: Int,
+    @SerializedName("gedung_name")
+    val gedungName: String,
+    @SerializedName("tenant_id")
+    val tenantId: Int,
     @SerializedName("status")
     val status: String,
     @SerializedName("total_price")
@@ -33,6 +37,10 @@ data class TransactionItem(
     val transactionId: Int,
     @SerializedName("menu_id")
     val menuId: Int,
+    @SerializedName("menu_name")
+    val menuName: String,
+    @SerializedName("tenant_name")
+    val tenantName: String,
     @SerializedName("quantity")
     val quantity: Int,
     @SerializedName("price")

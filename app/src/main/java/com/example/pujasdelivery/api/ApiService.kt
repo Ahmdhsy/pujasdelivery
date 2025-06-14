@@ -37,4 +37,10 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Call<TransactionResponse>
+
+    @GET("api/user/transactions")
+    fun getUserTransactions(
+        @Header("Authorization") token: String,
+        @Query("status") status: String
+    ): Call<List<TransactionResponse>>
 }
