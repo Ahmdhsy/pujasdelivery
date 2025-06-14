@@ -1,0 +1,304 @@
+[33mcommit 85c6ed16df8f9b7dc1d7efe6b58f8a2658df4049[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Sat Jun 14 19:51:26 2025 +0700
+
+    Menampilkan status pesanan
+
+[33mcommit d65ae1612a0d234a5ce4c3b8fe8c0057eac0a272[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Fri Jun 6 19:53:53 2025 +0700
+
+    Transaksi
+
+[33mcommit cf54843a394b1ae5a127987a3d4a8bea270162a7[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Wed Jun 4 08:34:07 2025 +0700
+
+    solve merge conflict
+
+[33mcommit 7ee6eaec2a8c33cecdd48d91308adfda6fed447e[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Sun Jun 1 13:28:09 2025 +0700
+
+    login, checkout
+
+[33mcommit 02ee17270dbf09e7dccce0147b6cd92a3c402d3f[m
+Author: dheaasprla <158927646+dheaasprla@users.noreply.github.com>
+Date:   Wed Jun 4 07:10:35 2025 +0700
+
+    Gedung
+
+[33mcommit 425f900db289f31c3f5a648c59652d96c385d7aa[m
+Merge: 6119bac f1076d3
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Sun Jun 1 14:15:31 2025 +0700
+
+    Login, profile, nama penerima, dll
+
+[33mcommit 6119bac444da672aef9e2f917d1415032aeba6d0[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Sun Jun 1 13:55:49 2025 +0700
+
+    Login
+
+[33mcommit f1076d395aa6b57a7b2e90827f1e67591250d027[m
+Author: dheaasprla <158927646+dheaasprla@users.noreply.github.com>
+Date:   Sun May 25 18:29:04 2025 +0700
+
+    Gedung
+
+[33mcommit bc6ce799ff9a765300637a2d4b5f38f3fe12c1ca[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Tue May 20 21:03:50 2025 +0700
+
+    Memperbaiki tampilan checkout, pembayaran, dan konfirmasi order
+
+[33mcommit e5178b76b425ac9d56ebf3ebd036b759a2d3598a[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Sun May 18 23:18:50 2025 +0700
+
+    Memperbaiki ui sampai checkout pesanan
+
+[33mcommit d53740b0e910091b06f9689ac9219a03afbe40e3[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Sun May 18 21:44:27 2025 +0700
+
+    Memperbaiki ui dan dashboardviewmodel untuk menampilkan menu dari tenant
+
+[33mcommit 54642c9c80ee1041009f0bb6e89fb5ab824b2f76[m
+Author: dheaasprla <158927646+dheaasprla@users.noreply.github.com>
+Date:   Sun May 18 07:02:31 2025 +0700
+
+    lanjutan menu
+
+[33mcommit e3c50f4648b2cdb07c9616c028dd38fd97c39c7e[m
+Author: dheaasprla <158927646+dheaasprla@users.noreply.github.com>
+Date:   Wed May 14 13:58:05 2025 +0700
+
+    membenarkan API
+
+[33mcommit 8d27c2acd33eb59357bd3a92c2783fd5dbc67879[m
+Author: dheaasprla <158927646+dheaasprla@users.noreply.github.com>
+Date:   Wed May 14 10:12:55 2025 +0700
+
+    Pesan commit kamu
+
+[33mcommit 0e0ef443e8d02b619c10fa71fcd3d7fd170f18e6[m
+Author: dheaasprla <158927646+dheaasprla@users.noreply.github.com>
+Date:   Wed May 7 10:38:08 2025 +0700
+
+    Menyambungkan API
+
+[33mcommit 583eebb7a8f17e91c7d1868631f840fda418671a[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Mon May 5 17:19:41 2025 +0700
+
+    Memperbaiki tampilan menu tersedia pada TenantDetailScreen
+
+[33mcommit 0114acdeb88c56ef82c50a2bf4712f71d26bb262[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Mon May 5 16:52:38 2025 +0700
+
+    Perubahan navbar dan beberapa tombol
+
+[33mcommit 9467460fadd221daf5cd88aad23d29356f5e91fe[m
+Author: dheaasprla <158927646+dheaasprla@users.noreply.github.com>
+Date:   Sun May 4 21:03:33 2025 +0700
+
+    Membuat tampilan frontend checkout dan payment
+
+[33mcommit 34a43043d487b597b45ecd03c6eea188f29a1257[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Wed Apr 30 15:22:01 2025 +0700
+
+    Menambahkan menu detail screen dan checkout screen
+
+[33mcommit 308494135d7359ee162c0a303f2519848853583d[m
+Merge: a5e553e 624d287
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Wed Apr 30 10:17:21 2025 +0700
+
+    merge dengan main untuk card category dan screen lainnya
+
+[33mcommit 624d2870c55259237587c6fef865da883d6c524a[m
+Author: dheaasprla <158927646+dheaasprla@users.noreply.github.com>
+Date:   Mon Apr 28 14:16:09 2025 +0700
+
+    Membuat Frontend Profil, Chat, Pesanan
+
+[33mcommit a5e553e62cf720c034ef4eabb756b1f06b23205c[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Wed Apr 23 09:34:09 2025 +0700
+
+    Update card kategori
+
+[33mcommit b284a564b23eb66a13c7d4fa2c64f77c1a006a6a[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Sun Apr 13 13:06:58 2025 +0700
+
+    Perbaikan card menu di dashboard
+
+[33mcommit bdcc93886074091eab4d8c7e9abf54fbe6aa812d[m
+Merge: 6d8e361 427d7a2
+Author: ahmad Fauzan <114909592+Ahmdhsy@users.noreply.github.com>
+Date:   Sun Apr 13 11:53:42 2025 +0700
+
+    Merge pull request #7 from Ahmdhsy/Ahmad
+    
+    Tenant Detail Screen
+
+[33mcommit 427d7a24b22b7bfde7db6bea9d785959687bbf91[m
+Author: Ahmdhsy <fauzannaji04@gmail.com>
+Date:   Sun Apr 13 11:52:49 2025 +0700
+
+    Tenant Detail Screen
+
+[33mcommit 6d8e361d7b8b31841459f888e083aa0b8ceaac2a[m
+Merge: 9ca6552 afc6a1f
+Author: ahmad Fauzan <114909592+Ahmdhsy@users.noreply.github.com>
+Date:   Sun Apr 13 10:28:40 2025 +0700
+
+    Merge pull request #6 from Ahmdhsy/Ahmad
+    
+    back-end data tenant :(
+
+[33mcommit afc6a1fa9baabd7c7eb48e98cb0c1c8dab9b0644[m
+Author: Ahmdhsy <fauzannaji04@gmail.com>
+Date:   Sun Apr 13 10:26:00 2025 +0700
+
+    back-end data tenant :(
+
+[33mcommit 9ca6552cb8a625067edf5954b0ae1be2ec0e4d46[m
+Merge: 26d19fc ddb92ba
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Sat Apr 12 12:59:23 2025 +0700
+
+    Resolve all merge conflicts
+
+[33mcommit 26d19fc21f9598249450d1eeec842063c8a0abc6[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Sat Apr 12 12:37:29 2025 +0700
+
+    Tampilan Dashboard
+
+[33mcommit ddb92bab92dbbf5eafb1d054f3c3c51982392f9e[m
+Merge: f2cd59b 36d3382
+Author: ahmad Fauzan <114909592+Ahmdhsy@users.noreply.github.com>
+Date:   Sat Apr 12 12:06:37 2025 +0700
+
+    Merge pull request #5 from Ahmdhsy/Ahmad
+    
+    Update Front-End, Splash, Onboard, Update Dashboard
+
+[33mcommit 36d33827a118426d006825139ebd595a93d359de[m
+Author: Ahmdhsy <fauzannaji04@gmail.com>
+Date:   Sat Apr 12 12:05:53 2025 +0700
+
+    Update Front-End, Splash, Onboard, Update Dashboard
+
+[33mcommit f2cd59b2b83028a65a2af93f13e9e6e42e16fde4[m
+Merge: 3aa230c e74bfc4
+Author: nazla <158866001+nazlakayla@users.noreply.github.com>
+Date:   Tue Apr 8 22:43:49 2025 +0700
+
+    Merge pull request #4 from Ahmdhsy/Ahmad
+    
+    Ahmad
+
+[33mcommit e74bfc40f3fada83a873107326a61cb1dbee1df0[m[33m ([m[1;32mAhmad[m[33m)[m
+Merge: 4f4e884 3aa230c
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Tue Apr 8 22:42:00 2025 +0700
+
+    Merge branch 'main' into Ahmad
+
+[33mcommit 3aa230c99495932d83f63bc7191425fcda87cfa9[m
+Merge: 057511c 3a1a683
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Tue Apr 8 22:37:02 2025 +0700
+
+    Merge branch 'main' of https://github.com/Ahmdhsy/Pujas-Delivery
+
+[33mcommit 057511c94146e6c48604902a069403de210c44a2[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Tue Apr 8 22:36:23 2025 +0700
+
+    Initial Android project with Room setup
+
+[33mcommit 3a1a68300b5fcc98cff33fda69e3de4031dc6538[m
+Author: nazla <158866001+nazlakayla@users.noreply.github.com>
+Date:   Tue Apr 8 22:31:54 2025 +0700
+
+    Delete settings.gradle.kts
+
+[33mcommit 522b0b5e1a00c44327541376da95127c9ebb3355[m
+Author: nazla <158866001+nazlakayla@users.noreply.github.com>
+Date:   Tue Apr 8 22:31:42 2025 +0700
+
+    Delete
+
+[33mcommit 8e1112ad41921d37509ca0a5b9233df24a61c10a[m
+Author: nazla <158866001+nazlakayla@users.noreply.github.com>
+Date:   Tue Apr 8 22:31:32 2025 +0700
+
+    Delete
+
+[33mcommit 8fec20d7d3ff802d756fbe0b889ff598a6d9cef0[m
+Author: nazla <158866001+nazlakayla@users.noreply.github.com>
+Date:   Tue Apr 8 22:31:22 2025 +0700
+
+    Delete
+
+[33mcommit 022604ccac7729aedd00491fbca82406c3c12c5e[m
+Author: nazla <158866001+nazlakayla@users.noreply.github.com>
+Date:   Tue Apr 8 22:31:11 2025 +0700
+
+    Delete
+
+[33mcommit 1d426ef0277fc984ddeb79428a40289ebdf7244d[m
+Author: nazla <158866001+nazlakayla@users.noreply.github.com>
+Date:   Tue Apr 8 22:30:58 2025 +0700
+
+    Delete
+
+[33mcommit f2d972d7aa75f5d5caec9477b40d0442a29ba29e[m
+Author: nazla <158866001+nazlakayla@users.noreply.github.com>
+Date:   Tue Apr 8 22:30:46 2025 +0700
+
+    Delete
+
+[33mcommit 450e26c6840ebde91a1d3b2d1fb4bac1724afb39[m
+Author: nazla <158866001+nazlakayla@users.noreply.github.com>
+Date:   Tue Apr 8 22:30:36 2025 +0700
+
+    Delete
+
+[33mcommit 368876e79a940a37d4bb466001157b7162280f55[m
+Author: nazla <158866001+nazlakayla@users.noreply.github.com>
+Date:   Tue Apr 8 22:30:24 2025 +0700
+
+    Delete
+
+[33mcommit 10b8c5abff1940b80b05c2b9214c6e0717032bf4[m
+Author: n4zla <nazla.kayla05@gmail.com>
+Date:   Tue Apr 8 22:25:07 2025 +0700
+
+    Reset main
+
+[33mcommit 4f4e88465c73232c84bb98b269aa2192ceb40bd0[m
+Author: nazla <158866001+nazlakayla@users.noreply.github.com>
+Date:   Wed Mar 26 13:33:27 2025 +0700
+
+    Delete tes
+
+[33mcommit 7aff7f0a91d457073eb18c61b9a8dec314dc890b[m
+Author: nazla <158866001+nazlakayla@users.noreply.github.com>
+Date:   Wed Mar 26 13:33:00 2025 +0700
+
+    Delete tes
+
+[33mcommit 9bde9dea8ac8659a699eac6cf058d7130dd027f4[m
+Author: nazla <158866001+nazlakayla@users.noreply.github.com>
+Date:   Wed Mar 26 13:29:20 2025 +0700
+
+    Create tes
