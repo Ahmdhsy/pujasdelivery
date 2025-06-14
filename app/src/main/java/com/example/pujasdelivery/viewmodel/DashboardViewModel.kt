@@ -16,6 +16,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+@JvmSuppressWildcards
 class DashboardViewModel : ViewModel() {
     private val apiService = RetrofitClient.menuApiService
 
@@ -77,7 +78,7 @@ class DashboardViewModel : ViewModel() {
                                         val gedungsFromApi = if (gedungResponse.isSuccessful) {
                                             gedungResponse.body() ?: emptyList()
                                         } else {
-                                            Log.e("DashboardViewModel", "Gagal memuat gedungs: ${gedungResponse.code()} - ${gedungResponse.message()} - ${gedungResponse.errorBody()?.string()}")
+                                            Log.e("DashboardViewModel", "Gagal memuat gedungs: ${gedungResponse.code()} - ${gedungResponse.message()} - ${gedungResponse.errorBody()?.string() ?: "No error body"}")
                                             emptyList()
                                         }
 
@@ -103,7 +104,7 @@ class DashboardViewModel : ViewModel() {
                                     }
 
                                     override fun onFailure(call: Call<List<Gedung>>, t: Throwable) {
-                                        Log.e("DashboardViewModel", "Error memuat gedungs: ${t.message}", t)
+                                        Log.e("DashboardViewModel", "Error memuat gedungs: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                                         _gedungs.postValue(emptyList())
                                         _loadingState.postValue(LoadingState.Error)
                                     }
@@ -111,7 +112,7 @@ class DashboardViewModel : ViewModel() {
                             }
 
                             override fun onFailure(call: Call<List<Tenant>>, t: Throwable) {
-                                Log.e("DashboardViewModel", "Error memuat tenants: ${t.message}", t)
+                                Log.e("DashboardViewModel", "Error memuat tenants: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                                 _tenants.postValue(emptyList())
                                 _loadingState.postValue(LoadingState.Error)
                             }
@@ -119,7 +120,7 @@ class DashboardViewModel : ViewModel() {
                     }
 
                     override fun onFailure(call: Call<List<Menu>>, t: Throwable) {
-                        Log.e("DashboardViewModel", "Error memuat data: ${t.message}", t)
+                        Log.e("DashboardViewModel", "Error memuat data: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                         _loadingState.postValue(LoadingState.Error)
                         _menus.postValue(emptyList())
                         _tenants.postValue(emptyList())
@@ -127,7 +128,7 @@ class DashboardViewModel : ViewModel() {
                     }
                 })
             } catch (e: Exception) {
-                Log.e("DashboardViewModel", "Error memuat data: ${e.message}", e)
+                Log.e("DashboardViewModel", "Error memuat data: ${e.message}, Stacktrace: ${e.stackTraceToString()}")
                 _loadingState.value = LoadingState.Error
                 _menus.postValue(emptyList())
                 _tenants.postValue(emptyList())
@@ -175,19 +176,19 @@ class DashboardViewModel : ViewModel() {
                             }
 
                             override fun onFailure(call: Call<List<Tenant>>, t: Throwable) {
-                                Log.e("DashboardViewModel", "Error memuat tenants: ${t.message}", t)
+                                Log.e("DashboardViewModel", "Error memuat tenants: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                                 _menus.postValue(emptyList())
                             }
                         })
                     }
 
                     override fun onFailure(call: Call<List<Menu>>, t: Throwable) {
-                        Log.e("DashboardViewModel", "Error memuat menu untuk tenant: ${t.message}")
+                        Log.e("DashboardViewModel", "Error memuat menu untuk tenant: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                         _menus.postValue(emptyList())
                     }
                 })
             } catch (e: Exception) {
-                Log.e("DashboardViewModel", "Error memuat menu untuk tenant: ${e.message}")
+                Log.e("DashboardViewModel", "Error memuat menu untuk tenant: ${e.message}, Stacktrace: ${e.stackTraceToString()}")
                 _menus.postValue(emptyList())
             }
         }
@@ -232,19 +233,19 @@ class DashboardViewModel : ViewModel() {
                             }
 
                             override fun onFailure(call: Call<List<Tenant>>, t: Throwable) {
-                                Log.e("DashboardViewModel", "Error memuat tenants: ${t.message}")
+                                Log.e("DashboardViewModel", "Error memuat tenants: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                                 _menus.postValue(emptyList())
                             }
                         })
                     }
 
                     override fun onFailure(call: Call<List<Menu>>, t: Throwable) {
-                        Log.e("DashboardViewModel", "Error memuat menu untuk kategori: ${t.message}")
+                        Log.e("DashboardViewModel", "Error memuat menu untuk kategori: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                         _menus.postValue(emptyList())
                     }
                 })
             } catch (e: Exception) {
-                Log.e("DashboardViewModel", "Error memuat menu untuk kategori: ${e.message}")
+                Log.e("DashboardViewModel", "Error memuat menu untuk kategori: ${e.message}, Stacktrace: ${e.stackTraceToString()}")
                 _menus.postValue(emptyList())
             }
         }

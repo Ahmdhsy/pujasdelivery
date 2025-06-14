@@ -98,15 +98,16 @@ class SignInActivity : AppCompatActivity() {
             override fun onResponse(call: Call<RegisterResponse>, response: Response<RegisterResponse>) {
                 if (response.isSuccessful && response.body()?.status == "success") {
                     val userData = response.body()?.data
-                    Log.d(TAG, "Data pengguna diperoleh: role=${userData?.role}")
+                    Log.d(TAG, "Data pengguna diperoleh: role=${userData?.role}, firebase_uid=${userData?.firebaseUid}")
                     if (isManualLogin) {
                         Toast.makeText(this@SignInActivity, "Login berhasil! Role: ${userData?.role}", Toast.LENGTH_SHORT).show()
                     }
-                    // Simpan role ke SharedPreferences
                     sharedPreferences.edit().apply {
                         putString("user_role", userData?.role)
                         apply()
                     }
+                    MyApplication.token = idToken
+                    Log.d(TAG, "Token disimpan ke MyApplication: ${MyApplication.token}")
                     navigateToMainActivity(userData?.role)
                 } else {
                     Log.e(TAG, "Gagal mengambil data pengguna: code=${response.code()}, message=${response.message()}, body=${response.errorBody()?.string()}")

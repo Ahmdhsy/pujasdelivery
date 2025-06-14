@@ -40,17 +40,31 @@ import com.example.pujasdelivery.ui.screens.CheckoutScreen
 import com.example.pujasdelivery.ui.screens.PaymentScreen
 import com.example.pujasdelivery.ui.screens.OrderConfirmationScreen
 import com.example.pujasdelivery.ui.courier.CourierOrderScreen
+import com.example.pujasdelivery.ui.courier.OrderDetailScreen // Pastikan file ini ada
 import com.example.pujasdelivery.ui.courier.ProfileCourierScreen
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.example.pujasdelivery.viewmodel.CourierViewModel
+import org.koin.androidx.compose.getViewModel
+import com.google.firebase.auth.FirebaseAuth
 
+@JvmSuppressWildcards
 class MainActivity : ComponentActivity() {
     private val viewModel: DashboardViewModel by viewModels()
-    private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Pastikan token diatur sejak awal
+        FirebaseAuth.getInstance().currentUser?.getIdToken(true)?.addOnSuccessListener { result ->
+            MyApplication.token = result.token
+            Log.d("MainActivity", "Token set: ${MyApplication.token}")
+            proceedWithNavigation()
+        }?.addOnFailureListener { e ->
+            Log.e("MainActivity", "Gagal mendapatkan token: ${e.message}")
+            proceedWithNavigation() // Lanjutkan meskipun token gagal, untuk UI dasar
+        }
+    }
+
+    private fun proceedWithNavigation() {
         val role = intent.getStringExtra("role")
         val startDestination = when (role) {
             "kurir" -> "courier_orders"
@@ -67,7 +81,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     NavigationSetup(
                         navController = navController,
-                        viewModel = viewModel,
+                        dashboardViewModel = viewModel,
                         startDestination = startDestination
                     )
                 }
@@ -79,11 +93,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun NavigationSetup(
     navController: NavHostController,
-    viewModel: DashboardViewModel,
+    dashboardViewModel: DashboardViewModel,
     startDestination: String
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val courierViewModel: CourierViewModel = getViewModel()
 
     Scaffold(
         bottomBar = {
@@ -109,10 +124,10 @@ fun NavigationSetup(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("dashboard") {
-                DashboardScreen(viewModel, navController)
+                DashboardScreen(dashboardViewModel, navController)
             }
             composable("orders") {
-                OrdersScreen(navController, viewModel)
+                OrdersScreen(navController, dashboardViewModel)
             }
             composable("profile") {
                 ProfileScreen(navController)
@@ -122,20 +137,20 @@ fun NavigationSetup(
             }
             composable("category/{category}") { backStackEntry ->
                 val category = backStackEntry.arguments?.getString("category") ?: "Makanan"
-                CategoryScreen(category = category, viewModel, navController)
+                CategoryScreen(category = category, dashboardViewModel, navController)
             }
             composable("menuDetail/{menuName}") { backStackEntry ->
                 val menuName = backStackEntry.arguments?.getString("menuName") ?: ""
                 MenuDetailScreen(
                     menuName = menuName,
-                    viewModel = viewModel,
+                    viewModel = dashboardViewModel,
                     navController = navController
                 )
             }
             composable("checkout") {
                 CheckoutScreen(
                     navController = navController,
-                    viewModel = viewModel
+                    viewModel = dashboardViewModel
                 )
             }
             composable(
@@ -145,7 +160,7 @@ fun NavigationSetup(
                 val gedungId = backStackEntry.arguments?.getLong("gedungId")
                 PaymentScreen(
                     navController = navController,
-                    viewModel = viewModel,
+                    viewModel = dashboardViewModel,
                     gedungId = gedungId
                 )
             }
@@ -160,7 +175,7 @@ fun NavigationSetup(
                 val cancel = backStackEntry.arguments?.getBoolean("cancel") ?: false
                 OrderConfirmationScreen(
                     navController = navController,
-                    viewModel = viewModel,
+                    viewModel = dashboardViewModel,
                     orderId = orderId
                 )
                 if (cancel) {
@@ -175,22 +190,35 @@ fun NavigationSetup(
                     tenantName = tenantName,
                     tenantId = tenantId,
                     navController = navController,
-                    viewModel = viewModel
+                    viewModel = dashboardViewModel
                 )
             }
             composable("courier_orders") {
                 CourierOrderScreen(
                     navController = navController,
-                    viewModel = viewModel
+                    viewModel = courierViewModel
                 )
             }
             composable("courier_profile") {
                 ProfileCourierScreen(navController = navController)
             }
+            // Tambahkan rute untuk OrderDetailScreen
+            composable(
+                "orderDetail/{orderId}",
+                arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val orderId = backStackEntry.arguments?.getString("orderId") ?: "0"
+                OrderDetailScreen(
+                    navController = navController,
+                    viewModel = courierViewModel,
+                    orderId = orderId
+                )
+            }
         }
     }
 }
 
+// [BottomNavigationBar dan CourierBottomNavigationBar tetap sama]
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()

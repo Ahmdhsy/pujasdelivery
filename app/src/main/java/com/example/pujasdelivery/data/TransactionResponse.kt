@@ -50,3 +50,8 @@ data class TransactionItem(
     @SerializedName("catatan")
     val catatan: String?
 )
+
+data class TransactionRequest(
+    @SerializedName("transaction_id")
+    val transactionId: Int
+)
