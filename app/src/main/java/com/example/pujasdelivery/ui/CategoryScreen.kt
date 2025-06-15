@@ -32,7 +32,6 @@ import com.example.pujasdelivery.data.CartItem
 import com.example.pujasdelivery.data.MenuWithTenantName
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
 
-
 @Composable
 fun CategoryScreen(
     category: String,

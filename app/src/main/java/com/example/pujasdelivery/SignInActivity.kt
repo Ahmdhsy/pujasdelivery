@@ -30,8 +30,7 @@ class SignInActivity : AppCompatActivity() {
         sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
 
         binding.textView.setOnClickListener {
-            val intent = Intent(this, SignUpActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, SignUpActivity::class.java))
         }
 
         binding.button.setOnClickListener {
@@ -66,27 +65,6 @@ class SignInActivity : AppCompatActivity() {
                 }
             } else {
                 Toast.makeText(this, "Tidak boleh ada kotak yang kosong", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        val currentUser = firebaseAuth.currentUser
-        if (currentUser != null) {
-            Log.d(TAG, "Pengguna sudah login, UID=${currentUser.uid}")
-            currentUser.getIdToken(true).addOnCompleteListener { tokenTask ->
-                if (tokenTask.isSuccessful) {
-                    val idToken = tokenTask.result?.token
-                    if (idToken != null) {
-                        Log.d(TAG, "ID Token diperoleh untuk auto-login")
-                        fetchUserData(idToken, isManualLogin = false)
-                    } else {
-                        Log.e(TAG, "ID Token null saat auto-login")
-                    }
-                } else {
-                    Log.e(TAG, "Gagal mendapatkan token saat auto-login: ${tokenTask.exception?.message}")
-                }
             }
         }
     }

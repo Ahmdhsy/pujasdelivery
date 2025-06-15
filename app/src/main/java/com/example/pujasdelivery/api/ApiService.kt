@@ -22,6 +22,19 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Call<RegisterResponse>
 
+    @PUT("api/users/update-name")
+    fun updateUserName(
+        @Header("Authorization") token: String,
+        @Body request: Map<String, String>
+    ): Call<RegisterResponse>
+
+    @Multipart
+    @POST("api/users/update-profile-photo")
+    fun updateProfilePhoto(
+        @Header("Authorization") token: String,
+        @Part profilePhoto: MultipartBody.Part
+    ): Call<RegisterResponse>
+
     @Multipart
     @POST("api/transactions")
     fun createTransaction(

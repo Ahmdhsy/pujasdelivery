@@ -1,7 +1,11 @@
 package com.example.pujasdelivery.api
 
+import android.util.Log
 import com.example.pujasdelivery.MyApplication
+import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.GsonBuilder
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.tasks.await
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -14,15 +18,32 @@ object RetrofitClient {
 
     private val authInterceptor = Interceptor { chain ->
         val original = chain.request()
-        val token = MyApplication.token
+        val token = getFreshToken()
         val modifiedRequest = if (token != null) {
             original.newBuilder()
                 .header("Authorization", "Bearer $token")
+                .header("Accept-Encoding", "gzip") // Aktifkan kompresi GZIP
                 .build()
         } else {
             original
         }
         chain.proceed(modifiedRequest)
+    }
+
+    private fun getFreshToken(): String? {
+        val user = FirebaseAuth.getInstance().currentUser
+        return runBlocking {
+            try {
+                val result = user?.getIdToken(true)?.await()
+                val token = result?.token
+                MyApplication.token = token
+                Log.d("RetrofitClient", "Fresh token obtained")
+                token
+            } catch (e: Exception) {
+                Log.e("RetrofitClient", "Failed to get fresh token: ${e.message}")
+                MyApplication.token
+            }
+        }
     }
 
     private val logging = HttpLoggingInterceptor().apply {
@@ -33,13 +54,14 @@ object RetrofitClient {
         OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(logging)
-            .connectTimeout(60, TimeUnit.SECONDS) // Tingkatkan timeout
-            .readTimeout(60, TimeUnit.SECONDS)   // Tingkatkan timeout
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .build()
     }
 
     private val gson = GsonBuilder()
-        .setLenient() // Mengizinkan parsing data yang tidak valid
+        .setLenient()
         .create()
 
     private val retrofit: Retrofit by lazy {

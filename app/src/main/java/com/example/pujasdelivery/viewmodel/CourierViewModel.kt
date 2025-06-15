@@ -12,11 +12,13 @@ import com.example.pujasdelivery.data.TransactionData
 import com.example.pujasdelivery.data.TransactionResponse
 import com.example.pujasdelivery.data.TransactionStatusRequest
 import com.example.pujasdelivery.MyApplication
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -60,22 +62,17 @@ class CourierViewModel(
     }
 
     private suspend fun waitForToken(): String? {
-        var token = MyApplication.token
-        var attempts = 0
-        val maxAttempts = 20
-        while (token == null && attempts < maxAttempts) {
-            Log.d("CourierViewModel", "Waiting for token, attempt $attempts, current token: ${MyApplication.token}")
-            delay(500)
-            token = MyApplication.token
-            attempts++
+        val user = FirebaseAuth.getInstance().currentUser
+        return try {
+            val result = user?.getIdToken(true)?.await()
+            val token = result?.token
+            MyApplication.token = token
+            Log.d("CourierViewModel", "Fresh token obtained: $token")
+            token
+        } catch (e: Exception) {
+            Log.e("CourierViewModel", "Failed to get token: ${e.message}")
+            null
         }
-        if (token == null) {
-            Log.e("CourierViewModel", "Token not available after $maxAttempts attempts")
-            _loadingState.value = LoadingState.ERROR
-        } else {
-            Log.d("CourierViewModel", "Token obtained: $token")
-        }
-        return token
     }
 
     fun loadOngoingTransactions() {
