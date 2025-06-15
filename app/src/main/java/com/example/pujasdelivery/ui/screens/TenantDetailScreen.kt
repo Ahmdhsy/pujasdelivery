@@ -6,35 +6,29 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.pujasdelivery.data.CartItem
 import com.example.pujasdelivery.data.MenuWithTenantName
+import com.example.pujasdelivery.ui.ChangeTenantDialog
 import com.example.pujasdelivery.ui.MenuCard
 import com.example.pujasdelivery.ui.SearchBar
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TenantDescScreen(
     tenantName: String?,
@@ -42,7 +36,6 @@ fun TenantDescScreen(
     navController: NavHostController,
     viewModel: DashboardViewModel
 ) {
-    // Handle null tenantName or tenantId
     if (tenantName == null || tenantId == null) {
         Box(
             modifier = Modifier
@@ -64,8 +57,8 @@ fun TenantDescScreen(
     val totalItemCount by viewModel.totalItemCount.observeAsState(initial = 0)
     val totalPrice by viewModel.totalPrice.observeAsState(initial = 0)
     val loadingState by viewModel.loadingState.observeAsState(initial = DashboardViewModel.LoadingState.Idle)
+    val changeTenantDialogState by viewModel.changeTenantDialogState.collectAsState()
 
-    // Load menus for the tenant
     LaunchedEffect(tenantName) {
         viewModel.loadMenusForTenant(tenantName)
     }
@@ -79,13 +72,11 @@ fun TenantDescScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Fixed header section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White)
             ) {
-                // Header with back button and title
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -106,7 +97,7 @@ fun TenantDescScreen(
                         )
                     }
                     Text(
-                        text = "Detail Tenant",
+                        text = tenantName,
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold
@@ -115,10 +106,9 @@ fun TenantDescScreen(
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.size(40.dp)) // Placeholder for symmetry
+                    Spacer(modifier = Modifier.size(40.dp))
                 }
 
-                // Tenant Detail Content (image, name, search bar)
                 TenantDetailContent(
                     tenantName = tenantName,
                     tenantId = tenantId,
@@ -130,6 +120,13 @@ fun TenantDescScreen(
                     navController = navController
                 )
             }
+        }
+
+        changeTenantDialogState?.let { state ->
+            ChangeTenantDialog(
+                onConfirm = { state.onConfirm() },
+                onDismiss = { state.onDismiss() }
+            )
         }
     }
 }
@@ -148,7 +145,6 @@ fun TenantDetailContent(
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
-    // Filter menus based on tenant and search query
     val filteredMenus = menus.filter {
         it.tenantName == tenantName && it.name.contains(searchQuery, ignoreCase = true)
     }
@@ -159,46 +155,14 @@ fun TenantDetailContent(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Fixed section: Tenant image, name, search bar
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Tenant Image Placeholder
-                Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.LightGray),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No Image",
-                        color = Color.Gray,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-
-                // Space between image and tenant name
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Tenant Name
-                Text(
-                    text = tenantName,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
-                )
-
-                // Search Bar
                 SearchBar(
                     searchQuery = searchQuery,
                     onSearchQueryChange = { searchQuery = it },
@@ -210,16 +174,14 @@ fun TenantDetailContent(
                 )
             }
 
-            // Scrollable section: Menu title and items
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = 64.dp), // Padding to avoid footer overlap
+                    .padding(bottom = 64.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Menu Title
                 Text(
                     text = "Menu Tersedia",
                     style = MaterialTheme.typography.titleMedium.copy(
@@ -232,7 +194,6 @@ fun TenantDetailContent(
                         .padding(bottom = 8.dp)
                 )
 
-                // Handle loading state
                 when (viewModel.loadingState.value) {
                     DashboardViewModel.LoadingState.Loading -> {
                         CircularProgressIndicator(
@@ -253,7 +214,6 @@ fun TenantDetailContent(
                         )
                     }
                     else -> {
-                        // Show message if no menus match the search
                         if (filteredMenus.isEmpty()) {
                             Text(
                                 text = "Tidak ada menu yang ditemukan",
@@ -265,7 +225,6 @@ fun TenantDetailContent(
                                     .wrapContentWidth(Alignment.CenterHorizontally)
                             )
                         } else {
-                            // Menu items
                             filteredMenus.forEach { menu ->
                                 MenuCard(
                                     menu = menu,
@@ -280,7 +239,6 @@ fun TenantDetailContent(
             }
         }
 
-        // Floating footer (only shown if items are in cart)
         if (totalItemCount > 0) {
             Card(
                 modifier = Modifier

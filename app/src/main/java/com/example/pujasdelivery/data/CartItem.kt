@@ -7,5 +7,6 @@ data class CartItem(
     val quantity: Int,
     val tenantId: Long,
     val tenantName: String,
-    val catatan: String? = null // Catatan pengguna untuk item, null jika tidak ada
+    val catatan: String? = null,
+    val gambar: String? = null
 )

@@ -2,7 +2,6 @@ package com.example.pujasdelivery.ui.screens
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -21,16 +20,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.example.pujasdelivery.api.RetrofitClient
-import com.example.pujasdelivery.data.CartItem
 import com.example.pujasdelivery.data.RegisterResponse
 import com.example.pujasdelivery.data.TransactionResponse
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
@@ -72,12 +72,6 @@ fun PaymentScreen(
         }
     )
 
-    // Log gedungId untuk debugging
-    LaunchedEffect(gedungId) {
-        Log.d("PaymentScreen", "gedungId: $gedungId")
-    }
-
-    // Ambil user_id dari endpoint /api/users/me
     LaunchedEffect(Unit) {
         firebaseAuth.currentUser?.getIdToken(true)?.addOnCompleteListener { tokenTask ->
             if (tokenTask.isSuccessful) {
@@ -87,28 +81,23 @@ fun PaymentScreen(
                         override fun onResponse(call: Call<RegisterResponse>, response: Response<RegisterResponse>) {
                             if (response.isSuccessful && response.body()?.status == "success") {
                                 userId = response.body()?.data?.id
-                                Log.d("PaymentScreen", "userId: ${userId}")
                             } else {
                                 errorMessage = "Gagal memuat data pengguna: ${response.message()}"
-                                Log.e("PaymentScreen", "Error: ${response.code()} - ${response.message()}")
                             }
                             isLoading = false
                         }
 
                         override fun onFailure(call: Call<RegisterResponse>, t: Throwable) {
                             errorMessage = "Error jaringan: ${t.message}"
-                            Log.e("PaymentScreen", "Network error: ${t.message}", t)
                             isLoading = false
                         }
                     })
                 } else {
                     errorMessage = "Gagal mendapatkan token"
-                    Log.e("PaymentScreen", "Token is null")
                     isLoading = false
                 }
             } else {
                 errorMessage = "Gagal mendapatkan token: ${tokenTask.exception?.message}"
-                Log.e("PaymentScreen", "Token error: ${tokenTask.exception?.message}")
                 isLoading = false
             }
         }
@@ -125,6 +114,7 @@ fun PaymentScreen(
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
                 text = errorMessage!!,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.error,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(16.dp)
@@ -138,7 +128,6 @@ fun PaymentScreen(
             .fillMaxSize()
             .padding(vertical = 16.dp)
     ) {
-        // Header with back button and title
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -161,10 +150,7 @@ fun PaymentScreen(
             }
             Text(
                 text = "Pembayaran",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                ),
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center
@@ -180,26 +166,19 @@ fun PaymentScreen(
         ) {
             Text(
                 text = "Pembayaran dilakukan melalui QRIS",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                ),
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Scan QRIS untuk melanjutkan pembayaran dan pesanan akan segera diproses!",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                ),
+                style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // QR Code placeholder
             Card(
                 modifier = Modifier
                     .size(200.dp)
@@ -216,6 +195,7 @@ fun PaymentScreen(
                 ) {
                     Text(
                         text = "QR Code",
+                        style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -224,15 +204,11 @@ fun PaymentScreen(
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Total pembayaran: Rp. $totalPrice",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                ),
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Upload proof of payment box
             Box(
                 modifier = Modifier
                     .wrapContentWidth()
@@ -258,25 +234,18 @@ fun PaymentScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = if (imageUri == null) "Unggah bukti pembayaran" else "Bukti pembayaran terunggah",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        ),
+                        style = MaterialTheme.typography.labelSmall,
                         color = if (imageUri == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
                         textAlign = TextAlign.Start
                     )
                 }
             }
 
-            // Note about uploading proof
             if (imageUri == null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Harap unggah bukti pembayaran agar pesanan dapat diproses.",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal
-                    ),
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 16.dp)
@@ -288,7 +257,6 @@ fun PaymentScreen(
                 onClick = {
                     if (userId == null || gedungId == null || cartItems.isEmpty() || imageUri == null) {
                         errorMessage = "Lengkapi data: pengguna, gedung, keranjang, atau bukti pembayaran."
-                        Log.e("PaymentScreen", "Validation failed: userId=$userId, gedungId=$gedungId, cartItems=${cartItems.size}, imageUri=$imageUri")
                         return@Button
                     }
 
@@ -297,23 +265,19 @@ fun PaymentScreen(
 
                     coroutineScope.launch {
                         try {
-                            // Ambil token secara asynchronous
                             firebaseAuth.currentUser?.getIdToken(true)?.addOnCompleteListener { tokenTask ->
                                 if (tokenTask.isSuccessful) {
                                     val token = tokenTask.result?.token
                                     if (token == null) {
                                         errorMessage = "Gagal mendapatkan token autentikasi."
                                         isLoading = false
-                                        Log.e("PaymentScreen", "Token is null")
                                         return@addOnCompleteListener
                                     }
 
-                                    // Konversi imageUri ke File
                                     val file = imageUriToFile(imageUri!!, context)
                                     val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
                                     val buktiPembayaran = MultipartBody.Part.createFormData("bukti_pembayaran", file.name, requestFile)
 
-                                    // Format items
                                     val itemsMap = mutableMapOf<String, RequestBody>()
                                     cartItems.forEachIndexed { index, item ->
                                         itemsMap["items[$index][menu_id]"] = item.menuId.toString().toRequestBody()
@@ -322,10 +286,6 @@ fun PaymentScreen(
                                         itemsMap["items[$index][catatan]"] = (item.catatan ?: "").toRequestBody()
                                     }
 
-                                    // Log request data untuk debugging
-                                    Log.d("PaymentScreen", "Sending transaction: userId=$userId, tenantId=${cartItems.first().tenantId}, gedungId=$gedungId, items=$itemsMap, buktiPembayaran=${file.name}")
-
-                                    // Kirim request
                                     RetrofitClient.apiService.createTransaction(
                                         token = "Bearer $token",
                                         userId = userId.toString().toRequestBody(),
@@ -338,31 +298,26 @@ fun PaymentScreen(
                                             isLoading = false
                                             if (response.isSuccessful && response.body()?.data != null) {
                                                 val transactionId = response.body()!!.data.id
-                                                Log.d("PaymentScreen", "Transaction created: transactionId=$transactionId")
                                                 viewModel.clearCart()
-                                                navController.navigate("orderConfirmation/$transactionId")
+                                                navController.navigate("orderConfirmation/$transactionId?fromOrders=false")
                                             } else {
                                                 errorMessage = "Gagal membuat transaksi: ${response.message()}"
-                                                Log.e("PaymentScreen", "API error: ${response.code()} - ${response.message()}")
                                             }
                                         }
 
                                         override fun onFailure(call: Call<TransactionResponse>, t: Throwable) {
                                             isLoading = false
                                             errorMessage = "Error jaringan: ${t.message}"
-                                            Log.e("PaymentScreen", "Network error: ${t.message}", t)
                                         }
                                     })
                                 } else {
                                     isLoading = false
                                     errorMessage = "Gagal mendapatkan token: ${tokenTask.exception?.message}"
-                                    Log.e("PaymentScreen", "Token error: ${tokenTask.exception?.message}")
                                 }
                             }
                         } catch (e: Exception) {
                             isLoading = false
                             errorMessage = "Terjadi kesalahan: ${e.message}"
-                            Log.e("PaymentScreen", "Exception: ${e.message}", e)
                         }
                     }
                 },
@@ -381,8 +336,8 @@ fun PaymentScreen(
                 } else {
                     Text(
                         text = "Sudah bayar",
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp)
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
@@ -390,6 +345,7 @@ fun PaymentScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = errorMessage!!,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 16.dp)
@@ -397,7 +353,6 @@ fun PaymentScreen(
             }
         }
 
-        // Custom dialog for uploading proof of payment
         if (showUploadDialog) {
             Dialog(
                 onDismissRequest = { showUploadDialog = false },
@@ -423,18 +378,13 @@ fun PaymentScreen(
                             .fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Title
                         Text(
                             text = "Upload Bukti Pembayaran",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp
-                            ),
+                            style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Image preview
                         Card(
                             modifier = Modifier
                                 .size(150.dp)
@@ -450,13 +400,13 @@ fun PaymentScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (imageUri != null) {
-                                    Text(
-                                        text = "Gambar Terunggah",
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            fontWeight = FontWeight.Bold
-                                        ),
-                                        textAlign = TextAlign.Center
+                                    AsyncImage(
+                                        model = imageUri,
+                                        contentDescription = "Uploaded Proof",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop,
+                                        placeholder = painterResource(id = android.R.drawable.ic_menu_upload),
+                                        error = painterResource(id = android.R.drawable.ic_menu_upload)
                                     )
                                 } else {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -468,10 +418,8 @@ fun PaymentScreen(
                                         )
                                         Text(
                                             text = "Silakan unggah gambar",
+                                            style = MaterialTheme.typography.bodyLarge,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                fontWeight = FontWeight.Medium
-                                            ),
                                             textAlign = TextAlign.Center
                                         )
                                     }
@@ -480,7 +428,6 @@ fun PaymentScreen(
                         }
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Upload button
                         Button(
                             onClick = { launcher.launch("image/*") },
                             modifier = Modifier
@@ -490,16 +437,12 @@ fun PaymentScreen(
                         ) {
                             Text(
                                 text = "Ambil gambar",
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Buttons (Batal and Selesaikan)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.End
@@ -507,10 +450,7 @@ fun PaymentScreen(
                             TextButton(onClick = { showUploadDialog = false }) {
                                 Text(
                                     text = "Batal",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 12.sp
-                                    ),
+                                    style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -524,10 +464,7 @@ fun PaymentScreen(
                             ) {
                                 Text(
                                     text = "Selesaikan",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 12.sp
-                                    ),
+                                    style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
@@ -539,7 +476,6 @@ fun PaymentScreen(
     }
 }
 
-// Helper function untuk mengonversi Uri ke File
 private fun imageUriToFile(uri: Uri, context: Context): File {
     val inputStream = context.contentResolver.openInputStream(uri)
     val file = File(context.cacheDir, "bukti_pembayaran_${System.currentTimeMillis()}.jpg")

@@ -1,15 +1,12 @@
 package com.example.pujasdelivery.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,7 +35,6 @@ fun OrdersScreen(
         var isLoading by remember { mutableStateOf(false) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
 
-        // Memuat transaksi saat layar pertama kali dibuka
         LaunchedEffect(Unit) {
             isLoading = true
             viewModel.fetchUserTransactions()
@@ -125,7 +121,7 @@ fun OrdersScreen(
                         LazyColumn {
                             items(filteredTransactions) { transaction ->
                                 OrderCard(
-                                    tenantName = transaction.items.firstOrNull()?.tenantName ?: "Unknown Tenant", // Ambil nama tenant dari item pertama
+                                    tenantName = transaction.items.firstOrNull()?.tenantName ?: "Unknown Tenant",
                                     status = StatusMapper.mapStatusToDisplay(transaction.status),
                                     items = transaction.items.map {
                                         CartItem(
@@ -140,7 +136,7 @@ fun OrdersScreen(
                                     totalPrice = transaction.totalPrice.toString(),
                                     proofImageUri = transaction.buktiPembayaran,
                                     onClick = {
-                                        navController.navigate("orderConfirmation/${transaction.id}")
+                                        navController.navigate("orderConfirmation/${transaction.id}?fromOrders=true")
                                     }
                                 )
                             }
@@ -203,7 +199,7 @@ fun OrderCard(
                             "Pending" -> Color(0xFF1976D2)
                             "Diproses" -> Color(0xFF1976D2)
                             "Dalam Pengantaran" -> Color(0xFF1976D2)
-                            "Selesai" -> StatusPositiveGreen // Menggunakan warna hijau dari color.kt
+                            "Selesai" -> StatusPositiveGreen
                             else -> MaterialTheme.colorScheme.onSurface
                         }
                     )

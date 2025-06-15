@@ -43,7 +43,6 @@ import com.example.pujasdelivery.ui.courier.CourierOrderScreen
 import com.example.pujasdelivery.ui.courier.OrderDetailScreen
 import com.example.pujasdelivery.ui.courier.ProfileCourierScreen
 import com.example.pujasdelivery.viewmodel.CourierViewModel
-import com.google.firebase.auth.FirebaseAuth
 import org.koin.androidx.compose.getViewModel
 
 class MainActivity : ComponentActivity() {
@@ -52,7 +51,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Ambil role dari intent
         val role = intent.getStringExtra("role")
         val startDestination = when (role) {
             "kurir" -> "courier_orders"
@@ -151,22 +149,22 @@ fun NavigationSetup(
                 )
             }
             composable(
-                route = "orderConfirmation/{orderId}?cancel={cancel}",
+                route = "orderConfirmation/{orderId}?fromOrders={fromOrders}&cancel={cancel}",
                 arguments = listOf(
                     navArgument("orderId") { type = NavType.StringType },
+                    navArgument("fromOrders") { type = NavType.BoolType; defaultValue = false },
                     navArgument("cancel") { type = NavType.BoolType; defaultValue = false }
                 )
             ) { backStackEntry ->
                 val orderId = backStackEntry.arguments?.getString("orderId") ?: "1"
+                val fromOrders = backStackEntry.arguments?.getBoolean("fromOrders") ?: false
                 val cancel = backStackEntry.arguments?.getBoolean("cancel") ?: false
                 OrderConfirmationScreen(
                     navController = navController,
                     viewModel = dashboardViewModel,
-                    orderId = orderId
+                    orderId = orderId,
+                    fromOrders = fromOrders
                 )
-                if (cancel) {
-                    Log.d("Cancellation", "Order $orderId cancelled")
-                }
             }
             composable("tenantDesc/{tenantName}/{tenantId}") { backStackEntry ->
                 val tenantName = backStackEntry.arguments?.getString("tenantName")
@@ -202,7 +200,6 @@ fun NavigationSetup(
     }
 }
 
-// BottomNavigationBar dan CourierBottomNavigationBar tetap sama seperti sebelumnya
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()

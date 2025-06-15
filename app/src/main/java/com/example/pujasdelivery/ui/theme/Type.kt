@@ -8,7 +8,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.pujasdelivery.R
 
-// Definisikan FontFamily untuk Raleway
 val Raleway = FontFamily(
     Font(R.font.raleway_regular, FontWeight.Normal),
     Font(R.font.raleway_medium, FontWeight.Medium),
@@ -17,9 +16,7 @@ val Raleway = FontFamily(
     Font(R.font.raleway_extrabold, FontWeight.ExtraBold),
 )
 
-// Definisikan Typography menggunakan Raleway
 val Typography = Typography(
-    // Untuk teks utama (body)
     bodyLarge = TextStyle(
         fontFamily = Raleway,
         fontWeight = FontWeight.Medium,
@@ -27,7 +24,6 @@ val Typography = Typography(
         lineHeight = 24.sp,
         letterSpacing = 0.5.sp
     ),
-    // Untuk judul (header)
     headlineLarge = TextStyle(
         fontFamily = Raleway,
         fontWeight = FontWeight.ExtraBold,
@@ -35,7 +31,6 @@ val Typography = Typography(
         lineHeight = 28.sp,
         letterSpacing = 0.sp
     ),
-    // Untuk teks kecil (seperti label di navbar)
     labelSmall = TextStyle(
         fontFamily = Raleway,
         fontWeight = FontWeight.Medium,
@@ -43,7 +38,6 @@ val Typography = Typography(
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp
     ),
-    // Tambahkan gaya lain jika diperlukan
     titleLarge = TextStyle(
         fontFamily = Raleway,
         fontWeight = FontWeight.Bold,

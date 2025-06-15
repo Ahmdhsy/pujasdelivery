@@ -21,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -29,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.example.pujasdelivery.api.RetrofitClient
 import com.example.pujasdelivery.data.CartItem
 import com.example.pujasdelivery.data.MenuWithTenantName
@@ -400,12 +403,12 @@ fun CheckoutScreen(
 @Composable
 fun CheckoutItemCard(
     cartItem: CartItem,
-    viewModel: DashboardViewModel, // Tambahkan parameter viewModel
+    viewModel: DashboardViewModel,
     onAddClick: () -> Unit,
     onRemoveClick: () -> Unit
 ) {
     var showNotesDialog by remember { mutableStateOf(false) }
-    var noteInput by remember { mutableStateOf(cartItem.catatan ?: "") } // Inisialisasi dari cartItem.catatan
+    var noteInput by remember { mutableStateOf(cartItem.catatan ?: "") }
 
     Card(
         modifier = Modifier
@@ -421,6 +424,26 @@ fun CheckoutItemCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (cartItem.gambar != null) {
+                AsyncImage(
+                    model = cartItem.gambar,
+                    contentDescription = "Gambar ${cartItem.name}",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(android.R.drawable.ic_menu_report_image),
+                    placeholder = painterResource(android.R.drawable.ic_menu_gallery)
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.LightGray)
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -469,7 +492,7 @@ fun CheckoutItemCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = cartItem.catatan ?: "Catatan", // Tampilkan catatan dari cartItem
+                            text = cartItem.catatan ?: "Catatan",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium
@@ -482,20 +505,6 @@ fun CheckoutItemCard(
             Column(
                 horizontalAlignment = Alignment.End
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.LightGray)
-                ) {
-                    Text(
-                        text = "Image",
-                        color = Color.Gray,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -610,7 +619,7 @@ fun CheckoutItemCard(
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
                             onClick = {
-                                viewModel.updateCartItemNote(cartItem.menuId, noteInput.takeIf { it.isNotBlank() }) // Simpan catatan
+                                viewModel.updateCartItemNote(cartItem.menuId, noteInput.takeIf { it.isNotBlank() })
                                 showNotesDialog = false
                             },
                             colors = ButtonDefaults.buttonColors(
@@ -641,6 +650,7 @@ fun cartItemToMenuWithTenantName(cartItem: CartItem): MenuWithTenantName {
         price = cartItem.price,
         description = "",
         category = "",
-        tenantName = cartItem.tenantName
+        tenantName = cartItem.tenantName,
+        gambar = cartItem.gambar
     )
 }

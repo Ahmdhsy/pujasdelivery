@@ -7,5 +7,6 @@ data class MenuWithTenantName(
     val price: Int,
     val description: String,
     val category: String,
-    val tenantName: String
+    val tenantName: String,
+    val gambar: String?
 )

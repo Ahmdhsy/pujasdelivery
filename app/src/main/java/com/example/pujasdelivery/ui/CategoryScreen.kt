@@ -3,11 +3,11 @@ package com.example.pujasdelivery.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -21,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.example.pujasdelivery.data.CartItem
 import com.example.pujasdelivery.data.MenuWithTenantName
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
@@ -44,15 +47,14 @@ fun CategoryScreen(
     val totalPrice by viewModel.totalPrice.observeAsState(initial = 0)
     val loadingState by viewModel.loadingState.observeAsState(initial = DashboardViewModel.LoadingState.Idle)
     var searchQuery by remember { mutableStateOf("") }
+    val changeTenantDialogState by viewModel.changeTenantDialogState.collectAsState()
 
-    // Determine placeholder text based on category
     val placeholderText = when (category.lowercase()) {
         "makanan" -> "Cari makanan"
         "minuman" -> "Cari minuman"
         else -> "Cari menu"
     }
 
-    // Load menus for the category
     LaunchedEffect(category) {
         viewModel.loadMenusByCategory(category)
     }
@@ -65,7 +67,6 @@ fun CategoryScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Header with back button and category title
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -95,10 +96,9 @@ fun CategoryScreen(
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.size(40.dp)) // Placeholder for symmetry
+                Spacer(modifier = Modifier.size(40.dp))
             }
 
-            // Search bar with dynamic placeholder
             SearchBar(
                 searchQuery = searchQuery,
                 onSearchQueryChange = { searchQuery = it },
@@ -107,7 +107,6 @@ fun CategoryScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // Handle loading state
             when (loadingState) {
                 DashboardViewModel.LoadingState.Loading -> {
                     CircularProgressIndicator(
@@ -130,7 +129,6 @@ fun CategoryScreen(
                 }
 
                 else -> {
-                    // Filter menus based on category and search query
                     val filteredMenus = menus.filter { menu ->
                         menu.category.equals(category, ignoreCase = true) &&
                                 menu.name.contains(searchQuery, ignoreCase = true)
@@ -151,7 +149,7 @@ fun CategoryScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .verticalScroll(rememberScrollState())
-                                .padding(bottom = 64.dp), // Padding to avoid footer overlap
+                                .padding(bottom = 64.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             filteredMenus.forEach { menu ->
@@ -168,7 +166,6 @@ fun CategoryScreen(
             }
         }
 
-        // Floating footer (only shown if items are in cart)
         if (totalItemCount > 0) {
             Card(
                 modifier = Modifier
@@ -210,6 +207,13 @@ fun CategoryScreen(
                     )
                 }
             }
+        }
+
+        changeTenantDialogState?.let { state ->
+            ChangeTenantDialog(
+                onConfirm = { state.onConfirm() },
+                onDismiss = { state.onDismiss() }
+            )
         }
     }
 }
@@ -290,19 +294,31 @@ fun MenuCard(
             modifier = Modifier.padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Image placeholder
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.LightGray),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No Image",
-                    color = Color.Gray,
-                    style = MaterialTheme.typography.bodyLarge
+            if (menu.gambar != null) {
+                AsyncImage(
+                    model = menu.gambar,
+                    contentDescription = "Gambar ${menu.name}",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(android.R.drawable.ic_menu_report_image),
+                    placeholder = painterResource(android.R.drawable.ic_menu_gallery)
                 )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.LightGray),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No Image",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(

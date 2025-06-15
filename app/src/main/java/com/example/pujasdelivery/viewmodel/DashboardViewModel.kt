@@ -1,11 +1,9 @@
 package com.example.pujasdelivery.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.pujasdelivery.MyApplication
 import com.example.pujasdelivery.api.ApiService
 import com.example.pujasdelivery.api.RetrofitClient
 import com.example.pujasdelivery.data.Gedung
@@ -15,6 +13,8 @@ import com.example.pujasdelivery.data.Tenant
 import com.example.pujasdelivery.data.TransactionResponse
 import com.example.pujasdelivery.data.CartItem
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
@@ -46,7 +46,6 @@ class DashboardViewModel : ViewModel() {
     private val _totalPrice = MutableLiveData<Int>(0)
     val totalPrice: LiveData<Int> get() = _totalPrice
 
-    // Tambahan untuk transaksi
     private val _transactions = MutableLiveData<List<TransactionResponse>>(emptyList())
     val transactions: LiveData<List<TransactionResponse>> get() = _transactions
 
@@ -55,6 +54,9 @@ class DashboardViewModel : ViewModel() {
 
     private val _error = MutableLiveData<String?>(null)
     val error: LiveData<String?> get() = _error
+
+    private val _changeTenantDialogState = MutableStateFlow<ChangeTenantDialogState?>(null)
+    val changeTenantDialogState: StateFlow<ChangeTenantDialogState?> get() = _changeTenantDialogState
 
     private val auth = FirebaseAuth.getInstance()
 
@@ -66,40 +68,30 @@ class DashboardViewModel : ViewModel() {
         viewModelScope.launch {
             _loadingState.value = LoadingState.Loading
             try {
-                Log.d("DashboardViewModel", "Memulai panggilan API ke ${menuApiService.getMenus().request().url}")
                 menuApiService.getMenus().enqueue(object : Callback<List<Menu>> {
                     override fun onResponse(call: Call<List<Menu>>, response: Response<List<Menu>>) {
-                        Log.d("DashboardViewModel", "Respons menu: ${response.code()} - ${response.message()}")
                         val menusFromApi = if (response.isSuccessful) {
                             response.body() ?: emptyList()
                         } else {
-                            Log.e("DashboardViewModel", "Gagal memuat menu: ${response.code()} - ${response.message()} - ${response.errorBody()?.string()}")
                             emptyList()
                         }
 
-                        // Panggilan API untuk tenants
                         menuApiService.getTenants().enqueue(object : Callback<List<Tenant>> {
                             override fun onResponse(call: Call<List<Tenant>>, tenantResponse: Response<List<Tenant>>) {
                                 val tenantsFromApi = if (tenantResponse.isSuccessful) {
                                     tenantResponse.body() ?: emptyList()
                                 } else {
-                                    Log.e("DashboardViewModel", "Gagal memuat tenants: ${tenantResponse.code()} - ${tenantResponse.message()} - ${tenantResponse.errorBody()?.string()}")
                                     emptyList()
                                 }
 
-                                // Panggilan API untuk buildings
                                 menuApiService.getBuildings().enqueue(object : Callback<List<Gedung>> {
                                     override fun onResponse(call: Call<List<Gedung>>, gedungResponse: Response<List<Gedung>>) {
-                                        Log.d("DashboardViewModel", "URL gedung yang dipanggil: ${call.request().url}")
-                                        Log.d("DashboardViewModel", "Respons gedung: ${gedungResponse.code()} - ${gedungResponse.message()}")
                                         val gedungsFromApi = if (gedungResponse.isSuccessful) {
                                             gedungResponse.body() ?: emptyList()
                                         } else {
-                                            Log.e("DashboardViewModel", "Gagal memuat gedungs: ${gedungResponse.code()} - ${gedungResponse.message()} - ${gedungResponse.errorBody()?.string() ?: "No error body"}")
                                             emptyList()
                                         }
 
-                                        // Proses data setelah semua panggilan selesai
                                         val menuWithTenantNames = menusFromApi.map { menu ->
                                             val tenant = tenantsFromApi.find { it.name == menu.tenant }
                                             MenuWithTenantName(
@@ -109,7 +101,8 @@ class DashboardViewModel : ViewModel() {
                                                 price = menu.getPriceAsInt(),
                                                 description = menu.deskripsi,
                                                 category = menu.category,
-                                                tenantName = menu.tenant ?: "Unknown Tenant"
+                                                tenantName = menu.tenant ?: "Unknown Tenant",
+                                                gambar = menu.gambar
                                             )
                                         }
 
@@ -117,11 +110,9 @@ class DashboardViewModel : ViewModel() {
                                         _tenants.postValue(tenantsFromApi)
                                         _gedungs.postValue(gedungsFromApi)
                                         _loadingState.postValue(LoadingState.Idle)
-                                        Log.d("DashboardViewModel", "Gedungs loaded: ${gedungsFromApi.size} items - ${gedungsFromApi.map { it.nama_gedung }}")
                                     }
 
                                     override fun onFailure(call: Call<List<Gedung>>, t: Throwable) {
-                                        Log.e("DashboardViewModel", "Error memuat gedungs: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                                         _gedungs.postValue(emptyList())
                                         _loadingState.postValue(LoadingState.Error)
                                     }
@@ -129,7 +120,6 @@ class DashboardViewModel : ViewModel() {
                             }
 
                             override fun onFailure(call: Call<List<Tenant>>, t: Throwable) {
-                                Log.e("DashboardViewModel", "Error memuat tenants: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                                 _tenants.postValue(emptyList())
                                 _loadingState.postValue(LoadingState.Error)
                             }
@@ -137,7 +127,6 @@ class DashboardViewModel : ViewModel() {
                     }
 
                     override fun onFailure(call: Call<List<Menu>>, t: Throwable) {
-                        Log.e("DashboardViewModel", "Error memuat data: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                         _loadingState.postValue(LoadingState.Error)
                         _menus.postValue(emptyList())
                         _tenants.postValue(emptyList())
@@ -145,7 +134,6 @@ class DashboardViewModel : ViewModel() {
                     }
                 })
             } catch (e: Exception) {
-                Log.e("DashboardViewModel", "Error memuat data: ${e.message}, Stacktrace: ${e.stackTraceToString()}")
                 _loadingState.value = LoadingState.Error
                 _menus.postValue(emptyList())
                 _tenants.postValue(emptyList())
@@ -162,7 +150,6 @@ class DashboardViewModel : ViewModel() {
                         val menusFromApi = if (response.isSuccessful) {
                             response.body() ?: emptyList()
                         } else {
-                            Log.e("DashboardViewModel", "Gagal memuat menu: ${response.code()} - ${response.errorBody()?.string()}")
                             emptyList()
                         }
 
@@ -171,7 +158,6 @@ class DashboardViewModel : ViewModel() {
                                 val tenantsFromApi = if (tenantResponse.isSuccessful) {
                                     tenantResponse.body() ?: emptyList()
                                 } else {
-                                    Log.e("DashboardViewModel", "Gagal memuat tenants: ${tenantResponse.code()} - ${tenantResponse.errorBody()?.string()}")
                                     emptyList()
                                 }
 
@@ -185,27 +171,24 @@ class DashboardViewModel : ViewModel() {
                                         price = menu.getPriceAsInt(),
                                         description = menu.deskripsi,
                                         category = menu.category,
-                                        tenantName = tenantName
+                                        tenantName = tenantName,
+                                        gambar = menu.gambar
                                     )
                                 }
-                                Log.d("DashboardViewModel", "Menus for tenant $tenantName: ${menuWithTenantNames.size}")
                                 _menus.postValue(menuWithTenantNames)
                             }
 
                             override fun onFailure(call: Call<List<Tenant>>, t: Throwable) {
-                                Log.e("DashboardViewModel", "Error memuat tenants: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                                 _menus.postValue(emptyList())
                             }
                         })
                     }
 
                     override fun onFailure(call: Call<List<Menu>>, t: Throwable) {
-                        Log.e("DashboardViewModel", "Error memuat menu untuk tenant: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                         _menus.postValue(emptyList())
                     }
                 })
             } catch (e: Exception) {
-                Log.e("DashboardViewModel", "Error memuat menu untuk tenant: ${e.message}, Stacktrace: ${e.stackTraceToString()}")
                 _menus.postValue(emptyList())
             }
         }
@@ -219,7 +202,6 @@ class DashboardViewModel : ViewModel() {
                         val menusFromApi = if (response.isSuccessful) {
                             response.body() ?: emptyList()
                         } else {
-                            Log.e("DashboardViewModel", "Gagal memuat menu: ${response.code()} - ${response.errorBody()?.string()}")
                             emptyList()
                         }
 
@@ -228,7 +210,6 @@ class DashboardViewModel : ViewModel() {
                                 val tenantsFromApi = if (tenantResponse.isSuccessful) {
                                     tenantResponse.body() ?: emptyList()
                                 } else {
-                                    Log.e("DashboardViewModel", "Gagal memuat tenants: ${tenantResponse.code()} - ${tenantResponse.errorBody()?.string()}")
                                     emptyList()
                                 }
 
@@ -242,27 +223,24 @@ class DashboardViewModel : ViewModel() {
                                         price = menu.getPriceAsInt(),
                                         description = menu.deskripsi,
                                         category = menu.category,
-                                        tenantName = menu.tenant ?: "Unknown Tenant"
+                                        tenantName = menu.tenant ?: "Unknown Tenant",
+                                        gambar = menu.gambar
                                     )
                                 }
-                                Log.d("DashboardViewModel", "Menus for category $category: ${menuWithTenantNames.size}")
                                 _menus.postValue(menuWithTenantNames)
                             }
 
                             override fun onFailure(call: Call<List<Tenant>>, t: Throwable) {
-                                Log.e("DashboardViewModel", "Error memuat tenants: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                                 _menus.postValue(emptyList())
                             }
                         })
                     }
 
                     override fun onFailure(call: Call<List<Menu>>, t: Throwable) {
-                        Log.e("DashboardViewModel", "Error memuat menu untuk kategori: ${t.message}, Stacktrace: ${t.stackTraceToString()}")
                         _menus.postValue(emptyList())
                     }
                 })
             } catch (e: Exception) {
-                Log.e("DashboardViewModel", "Error memuat menu untuk kategori: ${e.message}, Stacktrace: ${e.stackTraceToString()}")
                 _menus.postValue(emptyList())
             }
         }
@@ -288,14 +266,12 @@ class DashboardViewModel : ViewModel() {
                                             _error.value = null
                                         } else {
                                             _error.value = "Gagal memuat transaksi: ${response.code()} - ${response.message()}"
-                                            Log.e("DashboardViewModel", "API Error: ${response.errorBody()?.string()}")
                                         }
                                         _loadingState.value = LoadingState.Idle
                                     }
 
                                     override fun onFailure(call: Call<List<TransactionResponse>>, t: Throwable) {
                                         _error.value = "Error jaringan: ${t.message}"
-                                        Log.e("DashboardViewModel", "Network Error: ${t.stackTraceToString()}")
                                         _loadingState.value = LoadingState.Error
                                     }
                                 })
@@ -338,14 +314,12 @@ class DashboardViewModel : ViewModel() {
                                             _error.value = null
                                         } else {
                                             _error.value = "Gagal memuat transaksi: ${response.message()}"
-                                            Log.e("DashboardViewModel", "API Error: ${response.errorBody()?.string()}")
                                         }
                                         _loadingState.value = LoadingState.Idle
                                     }
 
                                     override fun onFailure(call: Call<TransactionResponse>, t: Throwable) {
                                         _error.value = "Error jaringan: ${t.message}"
-                                        Log.e("DashboardViewModel", "Network Error: ${t.stackTraceToString()}")
                                         _loadingState.value = LoadingState.Error
                                     }
                                 })
@@ -370,6 +344,28 @@ class DashboardViewModel : ViewModel() {
 
     fun addToCart(menu: MenuWithTenantName) {
         val currentCart = _cartItems.value?.toMutableList() ?: mutableListOf()
+        if (currentCart.isNotEmpty() && currentCart.any { it.tenantId != menu.tenantId }) {
+            _changeTenantDialogState.value = ChangeTenantDialogState(
+                menu = menu,
+                onConfirm = {
+                    // Clear cart first to ensure no items from previous tenant remain
+                    _cartItems.value = emptyList()
+                    updateCartTotals(emptyList())
+                    // Add the new item
+                    val newCart = mutableListOf<CartItem>()
+                    addCartItem(menu, newCart)
+                    _changeTenantDialogState.value = null
+                },
+                onDismiss = {
+                    _changeTenantDialogState.value = null
+                }
+            )
+        } else {
+            addCartItem(menu, currentCart)
+        }
+    }
+
+    private fun addCartItem(menu: MenuWithTenantName, currentCart: MutableList<CartItem>) {
         val existingItem = currentCart.find { it.menuId == menu.id }
         if (existingItem != null) {
             currentCart.remove(existingItem)
@@ -382,7 +378,8 @@ class DashboardViewModel : ViewModel() {
                     price = menu.price,
                     quantity = 1,
                     tenantId = menu.tenantId,
-                    tenantName = menu.tenantName
+                    tenantName = menu.tenantName,
+                    gambar = menu.gambar
                 )
             )
         }
@@ -415,7 +412,6 @@ class DashboardViewModel : ViewModel() {
         val totalPrice = cart.sumOf { it.price * it.quantity }
         _totalItemCount.value = totalItems
         _totalPrice.value = totalPrice
-        Log.d("DashboardViewModel", "Updated totals: items=$totalItems, price=$totalPrice")
     }
 
     fun updateCartItemNote(menuId: Int, catatan: String?) {
@@ -425,9 +421,14 @@ class DashboardViewModel : ViewModel() {
             currentCart.remove(existingItem)
             currentCart.add(existingItem.copy(catatan = catatan))
             _cartItems.value = currentCart
-            Log.d("DashboardViewModel", "Updated note for menuId $menuId: $catatan")
         }
     }
+
+    data class ChangeTenantDialogState(
+        val menu: MenuWithTenantName,
+        val onConfirm: () -> Unit,
+        val onDismiss: () -> Unit
+    )
 
     enum class LoadingState {
         Idle, Loading, Error

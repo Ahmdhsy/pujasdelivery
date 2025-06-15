@@ -21,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,8 +30,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.example.pujasdelivery.data.CartItem
 import com.example.pujasdelivery.data.MenuWithTenantName
+import com.example.pujasdelivery.ui.ChangeTenantDialog
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
 
 @Composable
@@ -44,6 +48,7 @@ fun MenuDetailScreen(
     val totalPrice by viewModel.totalPrice.observeAsState(initial = 0)
     val loadingState by viewModel.loadingState.observeAsState(initial = DashboardViewModel.LoadingState.Idle)
     var searchQuery by remember { mutableStateOf("") }
+    val changeTenantDialogState by viewModel.changeTenantDialogState.collectAsState()
 
     Box(
         modifier = Modifier
@@ -54,13 +59,11 @@ fun MenuDetailScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Fixed header section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White)
             ) {
-                // Header with back button and menu name
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -90,10 +93,9 @@ fun MenuDetailScreen(
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.size(40.dp)) // Placeholder for symmetry
+                    Spacer(modifier = Modifier.size(40.dp))
                 }
 
-                // Search bar
                 CustomSearchBar(
                     searchQuery = searchQuery,
                     onSearchQueryChange = { newQuery -> searchQuery = newQuery },
@@ -103,16 +105,14 @@ fun MenuDetailScreen(
                 )
             }
 
-            // Scrollable section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = 64.dp), // Padding to avoid footer overlap
+                    .padding(bottom = 64.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Handle loading state
                 when (loadingState) {
                     DashboardViewModel.LoadingState.Loading -> {
                         CircularProgressIndicator(
@@ -133,7 +133,6 @@ fun MenuDetailScreen(
                         )
                     }
                     else -> {
-                        // Filter by menuName and searchQuery
                         val filteredMenus = menus.filter { menu ->
                             menu.name.equals(menuName, ignoreCase = true) &&
                                     (menu.name.lowercase().contains(searchQuery.trim().lowercase()) ||
@@ -170,7 +169,6 @@ fun MenuDetailScreen(
             }
         }
 
-        // Floating footer (only shown if items are in cart)
         if (totalItemCount > 0) {
             Card(
                 modifier = Modifier
@@ -212,6 +210,13 @@ fun MenuDetailScreen(
                     )
                 }
             }
+        }
+
+        changeTenantDialogState?.let { state ->
+            ChangeTenantDialog(
+                onConfirm = { state.onConfirm() },
+                onDismiss = { state.onDismiss() }
+            )
         }
     }
 }
@@ -292,19 +297,31 @@ fun MenuDetailCard(
             modifier = Modifier.padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Image placeholder
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.LightGray),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No Image",
-                    color = Color.Gray,
-                    style = MaterialTheme.typography.bodyLarge
+            if (menu.gambar != null) {
+                AsyncImage(
+                    model = menu.gambar,
+                    contentDescription = "Gambar ${menu.name}",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(android.R.drawable.ic_menu_report_image),
+                    placeholder = painterResource(android.R.drawable.ic_menu_gallery)
                 )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.LightGray),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No Image",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(
