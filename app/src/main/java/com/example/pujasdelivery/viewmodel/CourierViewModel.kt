@@ -87,7 +87,7 @@ class CourierViewModel(
                 Log.d("CourierViewModel", "Calling getCourierOngoingTransactions with token: $token")
                 val response = apiService.getCourierOngoingTransactions(token)
                 // Filter hanya transaksi dengan status "Dalam Pengantaran"
-                val filteredTransactions = response.map { it.data }.filter { it.status.lowercase() == "dalam pengantaran" }
+                val filteredTransactions = response.map { it.data }.filter { it.status.lowercase() == "pengantaran" }
                 _ongoingTransactions.value = filteredTransactions
                 _loadingState.value = LoadingState.SUCCESS
                 Log.d("CourierViewModel", "Ongoing transactions loaded: ${filteredTransactions.size} items (filtered for 'Dalam Pengantaran')")

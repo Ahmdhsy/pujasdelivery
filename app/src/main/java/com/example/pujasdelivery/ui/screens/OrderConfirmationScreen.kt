@@ -25,6 +25,8 @@ import androidx.navigation.NavHostController
 import com.example.pujasdelivery.api.RetrofitClient
 import com.example.pujasdelivery.data.TransactionResponse
 import com.example.pujasdelivery.data.TransactionItem
+import com.example.pujasdelivery.ui.theme.StatusPositiveGreen
+import com.example.pujasdelivery.utils.StatusMapper
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
 import com.google.firebase.auth.FirebaseAuth
 import retrofit2.Call
@@ -41,11 +43,6 @@ fun OrderConfirmationScreen(
     var transaction by remember { mutableStateOf<TransactionResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    // Data statis untuk kurir dan status
-    val courierName = "Budi Kurir"
-    val whatsappNumber = "6281234567890"
-    val orderStatus = "Sedang Diproses"
 
     // Ambil detail transaksi
     LaunchedEffect(orderId) {
@@ -192,12 +189,18 @@ fun OrderConfirmationScreen(
                             .fillMaxWidth()
                     ) {
                         Text(
-                            text = "Status: $orderStatus",
+                            text = "Status: ${StatusMapper.mapStatusToDisplay(data.status)}",
                             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Pesanan Anda sedang diproses!",
+                            text = when (data.status) {
+                                "pending" -> "Pesanan Anda sedang menunggu konfirmasi!"
+                                "diproses" -> "Pesanan Anda sedang diproses!"
+                                "pengantaran" -> "Pesanan Anda sedang dalam pengantaran!"
+                                "selesai" -> "Pesanan Anda telah selesai!"
+                                else -> "Status tidak diketahui."
+                            },
                             style = MaterialTheme.typography.bodySmall
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -243,14 +246,14 @@ fun OrderConfirmationScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = courierName,
+                            text = "Budi Kurir", // Ini bisa diganti dengan data dinamis jika tersedia di backend
                             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = {
-                            val url = "https://wa.me/$whatsappNumber"
+                            val url = "https://wa.me/6281234567890"
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                             navController.context.startActivity(intent)
                         },

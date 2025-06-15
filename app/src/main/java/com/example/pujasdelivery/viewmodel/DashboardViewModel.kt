@@ -5,12 +5,16 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pujasdelivery.MyApplication
+import com.example.pujasdelivery.api.ApiService
 import com.example.pujasdelivery.api.RetrofitClient
 import com.example.pujasdelivery.data.Gedung
 import com.example.pujasdelivery.data.Menu
 import com.example.pujasdelivery.data.MenuWithTenantName
 import com.example.pujasdelivery.data.Tenant
+import com.example.pujasdelivery.data.TransactionResponse
 import com.example.pujasdelivery.data.CartItem
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
@@ -18,7 +22,8 @@ import retrofit2.Response
 
 @JvmSuppressWildcards
 class DashboardViewModel : ViewModel() {
-    private val apiService = RetrofitClient.menuApiService
+    private val apiService: ApiService = RetrofitClient.apiService
+    private val menuApiService = RetrofitClient.menuApiService
 
     private val _menus = MutableLiveData<List<MenuWithTenantName>>()
     val menus: LiveData<List<MenuWithTenantName>> get() = _menus
@@ -41,6 +46,18 @@ class DashboardViewModel : ViewModel() {
     private val _totalPrice = MutableLiveData<Int>(0)
     val totalPrice: LiveData<Int> get() = _totalPrice
 
+    // Tambahan untuk transaksi
+    private val _transactions = MutableLiveData<List<TransactionResponse>>(emptyList())
+    val transactions: LiveData<List<TransactionResponse>> get() = _transactions
+
+    private val _currentTransaction = MutableLiveData<TransactionResponse?>(null)
+    val currentTransaction: LiveData<TransactionResponse?> get() = _currentTransaction
+
+    private val _error = MutableLiveData<String?>(null)
+    val error: LiveData<String?> get() = _error
+
+    private val auth = FirebaseAuth.getInstance()
+
     init {
         loadData()
     }
@@ -49,8 +66,8 @@ class DashboardViewModel : ViewModel() {
         viewModelScope.launch {
             _loadingState.value = LoadingState.Loading
             try {
-                Log.d("DashboardViewModel", "Memulai panggilan API ke ${apiService.getMenus().request().url}")
-                apiService.getMenus().enqueue(object : Callback<List<Menu>> {
+                Log.d("DashboardViewModel", "Memulai panggilan API ke ${menuApiService.getMenus().request().url}")
+                menuApiService.getMenus().enqueue(object : Callback<List<Menu>> {
                     override fun onResponse(call: Call<List<Menu>>, response: Response<List<Menu>>) {
                         Log.d("DashboardViewModel", "Respons menu: ${response.code()} - ${response.message()}")
                         val menusFromApi = if (response.isSuccessful) {
@@ -61,7 +78,7 @@ class DashboardViewModel : ViewModel() {
                         }
 
                         // Panggilan API untuk tenants
-                        apiService.getTenants().enqueue(object : Callback<List<Tenant>> {
+                        menuApiService.getTenants().enqueue(object : Callback<List<Tenant>> {
                             override fun onResponse(call: Call<List<Tenant>>, tenantResponse: Response<List<Tenant>>) {
                                 val tenantsFromApi = if (tenantResponse.isSuccessful) {
                                     tenantResponse.body() ?: emptyList()
@@ -71,7 +88,7 @@ class DashboardViewModel : ViewModel() {
                                 }
 
                                 // Panggilan API untuk buildings
-                                apiService.getBuildings().enqueue(object : Callback<List<Gedung>> {
+                                menuApiService.getBuildings().enqueue(object : Callback<List<Gedung>> {
                                     override fun onResponse(call: Call<List<Gedung>>, gedungResponse: Response<List<Gedung>>) {
                                         Log.d("DashboardViewModel", "URL gedung yang dipanggil: ${call.request().url}")
                                         Log.d("DashboardViewModel", "Respons gedung: ${gedungResponse.code()} - ${gedungResponse.message()}")
@@ -140,7 +157,7 @@ class DashboardViewModel : ViewModel() {
     fun loadMenusForTenant(tenantName: String) {
         viewModelScope.launch {
             try {
-                apiService.getMenus().enqueue(object : Callback<List<Menu>> {
+                menuApiService.getMenus().enqueue(object : Callback<List<Menu>> {
                     override fun onResponse(call: Call<List<Menu>>, response: Response<List<Menu>>) {
                         val menusFromApi = if (response.isSuccessful) {
                             response.body() ?: emptyList()
@@ -149,7 +166,7 @@ class DashboardViewModel : ViewModel() {
                             emptyList()
                         }
 
-                        apiService.getTenants().enqueue(object : Callback<List<Tenant>> {
+                        menuApiService.getTenants().enqueue(object : Callback<List<Tenant>> {
                             override fun onResponse(call: Call<List<Tenant>>, tenantResponse: Response<List<Tenant>>) {
                                 val tenantsFromApi = if (tenantResponse.isSuccessful) {
                                     tenantResponse.body() ?: emptyList()
@@ -197,7 +214,7 @@ class DashboardViewModel : ViewModel() {
     fun loadMenusByCategory(category: String) {
         viewModelScope.launch {
             try {
-                apiService.getMenus().enqueue(object : Callback<List<Menu>> {
+                menuApiService.getMenus().enqueue(object : Callback<List<Menu>> {
                     override fun onResponse(call: Call<List<Menu>>, response: Response<List<Menu>>) {
                         val menusFromApi = if (response.isSuccessful) {
                             response.body() ?: emptyList()
@@ -206,7 +223,7 @@ class DashboardViewModel : ViewModel() {
                             emptyList()
                         }
 
-                        apiService.getTenants().enqueue(object : Callback<List<Tenant>> {
+                        menuApiService.getTenants().enqueue(object : Callback<List<Tenant>> {
                             override fun onResponse(call: Call<List<Tenant>>, tenantResponse: Response<List<Tenant>>) {
                                 val tenantsFromApi = if (tenantResponse.isSuccessful) {
                                     tenantResponse.body() ?: emptyList()
@@ -247,6 +264,106 @@ class DashboardViewModel : ViewModel() {
             } catch (e: Exception) {
                 Log.e("DashboardViewModel", "Error memuat menu untuk kategori: ${e.message}, Stacktrace: ${e.stackTraceToString()}")
                 _menus.postValue(emptyList())
+            }
+        }
+    }
+
+    fun fetchUserTransactions(status: String? = null) {
+        viewModelScope.launch {
+            _loadingState.value = LoadingState.Loading
+            try {
+                val user = auth.currentUser
+                if (user != null) {
+                    user.getIdToken(true).addOnSuccessListener { idTokenResult ->
+                        val idToken = idTokenResult.token
+                        if (idToken != null) {
+                            apiService.getUserTransactions("Bearer $idToken", status ?: "")
+                                .enqueue(object : Callback<List<TransactionResponse>> {
+                                    override fun onResponse(
+                                        call: Call<List<TransactionResponse>>,
+                                        response: Response<List<TransactionResponse>>
+                                    ) {
+                                        if (response.isSuccessful) {
+                                            _transactions.value = response.body() ?: emptyList()
+                                            _error.value = null
+                                        } else {
+                                            _error.value = "Gagal memuat transaksi: ${response.code()} - ${response.message()}"
+                                            Log.e("DashboardViewModel", "API Error: ${response.errorBody()?.string()}")
+                                        }
+                                        _loadingState.value = LoadingState.Idle
+                                    }
+
+                                    override fun onFailure(call: Call<List<TransactionResponse>>, t: Throwable) {
+                                        _error.value = "Error jaringan: ${t.message}"
+                                        Log.e("DashboardViewModel", "Network Error: ${t.stackTraceToString()}")
+                                        _loadingState.value = LoadingState.Error
+                                    }
+                                })
+                        } else {
+                            _error.value = "ID Token tidak tersedia"
+                            _loadingState.value = LoadingState.Error
+                        }
+                    }.addOnFailureListener { exception ->
+                        _error.value = "Gagal mendapatkan ID Token: ${exception.message}"
+                        _loadingState.value = LoadingState.Error
+                    }
+                } else {
+                    _error.value = "Pengguna belum login"
+                    _loadingState.value = LoadingState.Error
+                }
+            } catch (e: Exception) {
+                _error.value = "Error: ${e.message}"
+                _loadingState.value = LoadingState.Error
+            }
+        }
+    }
+
+    fun fetchTransaction(transactionId: Int) {
+        viewModelScope.launch {
+            _loadingState.value = LoadingState.Loading
+            try {
+                val user = auth.currentUser
+                if (user != null) {
+                    user.getIdToken(true).addOnSuccessListener { idTokenResult ->
+                        val idToken = idTokenResult.token
+                        if (idToken != null) {
+                            apiService.getTransaction("Bearer $idToken", transactionId)
+                                .enqueue(object : Callback<TransactionResponse> {
+                                    override fun onResponse(
+                                        call: Call<TransactionResponse>,
+                                        response: Response<TransactionResponse>
+                                    ) {
+                                        if (response.isSuccessful && response.body() != null) {
+                                            _currentTransaction.value = response.body()
+                                            _error.value = null
+                                        } else {
+                                            _error.value = "Gagal memuat transaksi: ${response.message()}"
+                                            Log.e("DashboardViewModel", "API Error: ${response.errorBody()?.string()}")
+                                        }
+                                        _loadingState.value = LoadingState.Idle
+                                    }
+
+                                    override fun onFailure(call: Call<TransactionResponse>, t: Throwable) {
+                                        _error.value = "Error jaringan: ${t.message}"
+                                        Log.e("DashboardViewModel", "Network Error: ${t.stackTraceToString()}")
+                                        _loadingState.value = LoadingState.Error
+                                    }
+                                })
+                        } else {
+                            _error.value = "ID Token tidak tersedia"
+                            _loadingState.value = LoadingState.Error
+                        }
+                    }.addOnFailureListener { exception ->
+                        _error.value = "Gagal mendapatkan ID Token: ${exception.message}"
+                        _loadingState.value = LoadingState.Error
+                    }
+                } else {
+                    _error.value = "Pengguna belum login"
+                    _loadingState.value = LoadingState.Error
+                }
+            } catch (e: Exception) {
+                _error.value = "Error: ${e.message}"
+                _loadingState.value = LoadingState.Error
             }
         }
     }
@@ -301,7 +418,6 @@ class DashboardViewModel : ViewModel() {
         Log.d("DashboardViewModel", "Updated totals: items=$totalItems, price=$totalPrice")
     }
 
-    // Memperbarui catatan untuk item tertentu berdasarkan menuId
     fun updateCartItemNote(menuId: Int, catatan: String?) {
         val currentCart = _cartItems.value?.toMutableList() ?: mutableListOf()
         val existingItem = currentCart.find { it.menuId == menuId }

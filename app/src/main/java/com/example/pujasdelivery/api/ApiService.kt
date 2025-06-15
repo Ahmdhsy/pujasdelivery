@@ -52,10 +52,10 @@ interface ApiService {
         @Path("id") id: Int
     ): Call<TransactionResponse>
 
-    @GET("api/user/transactions")
+    @GET("api/users/transactions")
     fun getUserTransactions(
-        @Header("Authorization") token: String,
-        @Query("status") status: String
+        @Header("Authorization") authorization: String,
+        @Query("status") status: String? = null
     ): Call<List<TransactionResponse>>
 
     @GET("api/transactions/courier/ongoing")

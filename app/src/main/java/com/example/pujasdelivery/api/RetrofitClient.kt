@@ -36,12 +36,12 @@ object RetrofitClient {
             try {
                 val result = user?.getIdToken(true)?.await()
                 val token = result?.token
-                MyApplication.token = token
-                Log.d("RetrofitClient", "Fresh token obtained")
+                MyApplication.token = token // Simpan untuk keperluan debug, tapi utamakan langsung dari Firebase
+                Log.d("RetrofitClient", "Fresh token obtained: $token")
                 token
             } catch (e: Exception) {
                 Log.e("RetrofitClient", "Failed to get fresh token: ${e.message}")
-                MyApplication.token
+                null
             }
         }
     }

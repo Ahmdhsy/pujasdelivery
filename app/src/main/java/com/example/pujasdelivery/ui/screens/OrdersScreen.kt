@@ -20,14 +20,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.pujasdelivery.api.RetrofitClient
-import com.example.pujasdelivery.data.Order
 import com.example.pujasdelivery.data.CartItem
+import com.example.pujasdelivery.data.TransactionData
 import com.example.pujasdelivery.ui.theme.PujasDeliveryTheme
+import com.example.pujasdelivery.ui.theme.StatusPositiveGreen
+import com.example.pujasdelivery.utils.StatusMapper
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun OrdersScreen(
@@ -36,30 +34,18 @@ fun OrdersScreen(
 ) {
     PujasDeliveryTheme {
         var selectedTab by remember { mutableStateOf(0) }
-        var orders by remember { mutableStateOf<List<Order>>(emptyList()) }
+        var transactions by remember { mutableStateOf<List<TransactionData>>(emptyList()) }
         var isLoading by remember { mutableStateOf(false) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
-        val scope = rememberCoroutineScope()
 
+        // Memuat transaksi saat layar pertama kali dibuka
         LaunchedEffect(Unit) {
-            scope.launch {
-                isLoading = true
-                try {
-                    val response = withContext(Dispatchers.IO) {
-                        RetrofitClient.menuApiService.getOrders().execute()
-                    }
-                    if (response.isSuccessful) {
-                        orders = response.body() ?: emptyList()
-                        errorMessage = null
-                    } else {
-                        errorMessage = "Gagal memuat pesanan: ${response.message()}"
-                    }
-                } catch (e: Exception) {
-                    errorMessage = "Error: ${e.message}"
-                    Log.e("OrdersScreen", "Error memuat pesanan: ${e.message}", e)
-                } finally {
-                    isLoading = false
-                }
+            isLoading = true
+            viewModel.fetchUserTransactions()
+            viewModel.transactions.observeForever { transactionList ->
+                transactions = transactionList.map { it.data }
+                isLoading = false
+                errorMessage = viewModel.error.value
             }
         }
 
@@ -123,13 +109,13 @@ fun OrdersScreen(
                     )
                 }
                 else -> {
-                    val filteredOrders = when (selectedTab) {
-                        0 -> orders.filter { it.status == "pending" || it.status == "cancelled" }
-                        1 -> orders.filter { it.status == "completed" }
+                    val filteredTransactions = when (selectedTab) {
+                        0 -> transactions.filter { it.status in listOf("pending", "diproses", "pengantaran") }
+                        1 -> transactions.filter { it.status == "selesai" }
                         else -> emptyList()
                     }
 
-                    if (filteredOrders.isEmpty()) {
+                    if (filteredTransactions.isEmpty()) {
                         Text(
                             text = if (selectedTab == 0) "Belum ada pesanan dalam proses" else "Belum ada riwayat pesanan",
                             style = MaterialTheme.typography.bodyMedium,
@@ -137,15 +123,24 @@ fun OrdersScreen(
                         )
                     } else {
                         LazyColumn {
-                            items(filteredOrders) { order ->
+                            items(filteredTransactions) { transaction ->
                                 OrderCard(
-                                    tenantName = order.tenantName,
-                                    status = order.status,
-                                    items = order.items,
-                                    totalPrice = order.totalPrice.toString(),
-                                    proofImageUri = order.proofImageUri,
+                                    tenantName = transaction.items.firstOrNull()?.tenantName ?: "Unknown Tenant", // Ambil nama tenant dari item pertama
+                                    status = StatusMapper.mapStatusToDisplay(transaction.status),
+                                    items = transaction.items.map {
+                                        CartItem(
+                                            menuId = it.menuId,
+                                            name = it.menuName ?: "Unknown",
+                                            price = it.price.toInt(),
+                                            quantity = it.quantity,
+                                            tenantId = transaction.tenantId.toLong(),
+                                            tenantName = it.tenantName ?: "Unknown"
+                                        )
+                                    },
+                                    totalPrice = transaction.totalPrice.toString(),
+                                    proofImageUri = transaction.buktiPembayaran,
                                     onClick = {
-                                        navController.navigate("orderConfirmation/${order.id}")
+                                        navController.navigate("orderConfirmation/${transaction.id}")
                                     }
                                 )
                             }
@@ -202,17 +197,13 @@ fun OrderCard(
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = when (status) {
-                            "pending" -> "Sedang Diproses"
-                            "completed" -> "Selesai"
-                            "cancelled" -> "Dibatalkan"
-                            else -> status
-                        },
+                        text = status,
                         style = MaterialTheme.typography.bodySmall,
                         color = when (status) {
-                            "pending" -> Color(0xFF1976D2)
-                            "completed" -> Color.Green
-                            "cancelled" -> Color.Red
+                            "Pending" -> Color(0xFF1976D2)
+                            "Diproses" -> Color(0xFF1976D2)
+                            "Dalam Pengantaran" -> Color(0xFF1976D2)
+                            "Selesai" -> StatusPositiveGreen // Menggunakan warna hijau dari color.kt
                             else -> MaterialTheme.colorScheme.onSurface
                         }
                     )
