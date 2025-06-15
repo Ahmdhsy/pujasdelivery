@@ -68,37 +68,17 @@ fun OrdersScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Row(
+            Text(
+                text = "Pesanan",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(Color.LightGray.copy(alpha = 0.2f), shape = CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-                Text(
-                    text = "Pesanan",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 8.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Start
-                )
-            }
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
 
             TabRow(
                 selectedTabIndex = selectedTab,

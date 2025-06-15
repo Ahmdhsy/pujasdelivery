@@ -42,7 +42,7 @@ fun OnboardingScreen(onNextClicked: () -> Unit) {
             Button(
                 onClick = onNextClicked,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF4A261)),
-                shape = MaterialTheme.shapes.medium,
+                shape = MaterialTheme.shapes.medium
             ) {
                 Text("Pesan sekarang!", color = Color(0xFF2C3755))
             }

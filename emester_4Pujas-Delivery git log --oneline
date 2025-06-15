@@ -1,0 +1,54 @@
+[33m138e834[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mDhea2[m[33m, [m[1;31morigin/Dhea2[m[33m)[m kurir
+[33m8b4ee9b[m perbaharui kurir
+[33m2920cd6[m riwayat kurir
+[33mb4ccef8[m ada perbaharui
+[33m8c85211[m detail screen kurir
+[33m41db8f0[m Kurir
+[33md4972b6[m Merge branch 'main' into Dhea2
+[33md65ae16[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Transaksi
+[33mcf54843[m solve merge conflict
+[33m7ee6eae[m login, checkout
+[33m02ee172[m Gedung
+[33m425f900[m Login, profile, nama penerima, dll
+[33m6119bac[m Login
+[33mf1076d3[m Gedung
+[33mbc6ce79[m Memperbaiki tampilan checkout, pembayaran, dan konfirmasi order
+[33me5178b7[m Memperbaiki ui sampai checkout pesanan
+[33md53740b[m Memperbaiki ui dan dashboardviewmodel untuk menampilkan menu dari tenant
+[33m54642c9[m lanjutan menu
+[33me3c50f4[m membenarkan API
+[33m8d27c2a[m Pesan commit kamu
+[33m0e0ef44[m Menyambungkan API
+[33m583eebb[m Memperbaiki tampilan menu tersedia pada TenantDetailScreen
+[33m0114acd[m Perubahan navbar dan beberapa tombol
+[33m9467460[m Membuat tampilan frontend checkout dan payment
+[33m34a4304[m Menambahkan menu detail screen dan checkout screen
+[33m3084941[m merge dengan main untuk card category dan screen lainnya
+[33m624d287[m Membuat Frontend Profil, Chat, Pesanan
+[33ma5e553e[m Update card kategori
+[33mb284a56[m Perbaikan card menu di dashboard
+[33mbdcc938[m[33m ([m[1;32mmain[m[33m)[m Merge pull request #7 from Ahmdhsy/Ahmad
+[33m427d7a2[m Tenant Detail Screen
+[33m6d8e361[m Merge pull request #6 from Ahmdhsy/Ahmad
+[33mafc6a1f[m back-end data tenant :(
+[33m9ca6552[m Resolve all merge conflicts
+[33m26d19fc[m Tampilan Dashboard
+[33mddb92ba[m Merge pull request #5 from Ahmdhsy/Ahmad
+[33m36d3382[m Update Front-End, Splash, Onboard, Update Dashboard
+[33mf2cd59b[m Merge pull request #4 from Ahmdhsy/Ahmad
+[33me74bfc4[m Merge branch 'main' into Ahmad
+[33m3aa230c[m Merge branch 'main' of https://github.com/Ahmdhsy/Pujas-Delivery
+[33m057511c[m Initial Android project with Room setup
+[33m3a1a683[m Delete settings.gradle.kts
+[33m522b0b5[m Delete
+[33m8e1112a[m Delete
+[33m8fec20d[m Delete
+[33m022604c[m Delete
+[33m1d426ef[m Delete
+[33mf2d972d[m Delete
+[33m450e26c[m Delete
+[33m368876e[m Delete
+[33m10b8c5a[m Reset main
+[33m4f4e884[m Delete tes
+[33m7aff7f0[m Delete tes
+[33m9bde9de[m Create tes

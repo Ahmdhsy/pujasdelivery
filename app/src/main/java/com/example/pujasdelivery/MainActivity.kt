@@ -6,8 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -40,47 +40,34 @@ import com.example.pujasdelivery.ui.screens.CheckoutScreen
 import com.example.pujasdelivery.ui.screens.PaymentScreen
 import com.example.pujasdelivery.ui.screens.OrderConfirmationScreen
 import com.example.pujasdelivery.ui.courier.CourierOrderScreen
-import com.example.pujasdelivery.ui.courier.OrderDetailScreen // Pastikan file ini ada
+import com.example.pujasdelivery.ui.courier.OrderDetailScreen
 import com.example.pujasdelivery.ui.courier.ProfileCourierScreen
 import com.example.pujasdelivery.viewmodel.CourierViewModel
-import org.koin.androidx.compose.getViewModel
 import com.google.firebase.auth.FirebaseAuth
+import org.koin.androidx.compose.getViewModel
 
-@JvmSuppressWildcards
 class MainActivity : ComponentActivity() {
     private val viewModel: DashboardViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Pastikan token diatur sejak awal
-        FirebaseAuth.getInstance().currentUser?.getIdToken(true)?.addOnSuccessListener { result ->
-            MyApplication.token = result.token
-            Log.d("MainActivity", "Token set: ${MyApplication.token}")
-            proceedWithNavigation()
-        }?.addOnFailureListener { e ->
-            Log.e("MainActivity", "Gagal mendapatkan token: ${e.message}")
-            proceedWithNavigation() // Lanjutkan meskipun token gagal, untuk UI dasar
-        }
-    }
-
-    private fun proceedWithNavigation() {
+        // Ambil role dari intent
         val role = intent.getStringExtra("role")
         val startDestination = when (role) {
             "kurir" -> "courier_orders"
-            else -> "dashboard" // Default ke DashboardScreen untuk pengguna
+            else -> "dashboard"
         }
         Log.d("MainActivity", "Starting with role: $role, destination: $startDestination")
 
         setContent {
-            val navController = rememberNavController()
             PujasDeliveryTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     NavigationSetup(
-                        navController = navController,
+                        navController = rememberNavController(),
                         dashboardViewModel = viewModel,
                         startDestination = startDestination
                     )
@@ -113,7 +100,6 @@ fun NavigationSetup(
                             !currentRoute.startsWith("orderDetail") -> {
                         BottomNavigationBar(navController)
                     }
-                    else -> Unit
                 }
             }
         }
@@ -185,7 +171,6 @@ fun NavigationSetup(
             composable("tenantDesc/{tenantName}/{tenantId}") { backStackEntry ->
                 val tenantName = backStackEntry.arguments?.getString("tenantName")
                 val tenantId = backStackEntry.arguments?.getString("tenantId")?.toIntOrNull()
-                Log.d("Navigation", "Navigating to tenantDesc with tenantName: $tenantName, tenantId: $tenantId")
                 TenantDescScreen(
                     tenantName = tenantName,
                     tenantId = tenantId,
@@ -202,7 +187,6 @@ fun NavigationSetup(
             composable("courier_profile") {
                 ProfileCourierScreen(navController = navController)
             }
-            // Tambahkan rute untuk OrderDetailScreen
             composable(
                 "orderDetail/{orderId}",
                 arguments = listOf(navArgument("orderId") { type = NavType.StringType })
@@ -218,7 +202,7 @@ fun NavigationSetup(
     }
 }
 
-// [BottomNavigationBar dan CourierBottomNavigationBar tetap sama]
+// BottomNavigationBar dan CourierBottomNavigationBar tetap sama seperti sebelumnya
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()

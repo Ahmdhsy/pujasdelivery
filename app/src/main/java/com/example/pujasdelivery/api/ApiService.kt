@@ -22,6 +22,19 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Call<RegisterResponse>
 
+    @PUT("api/users/update-name")
+    fun updateUserName(
+        @Header("Authorization") token: String,
+        @Body request: Map<String, String>
+    ): Call<RegisterResponse>
+
+    @Multipart
+    @POST("api/users/update-profile-photo")
+    fun updateProfilePhoto(
+        @Header("Authorization") token: String,
+        @Part profilePhoto: MultipartBody.Part
+    ): Call<RegisterResponse>
+
     @Multipart
     @POST("api/transactions")
     fun createTransaction(
@@ -38,6 +51,12 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Call<TransactionResponse>
+
+    @GET("api/user/transactions")
+    fun getUserTransactions(
+        @Header("Authorization") token: String,
+        @Query("status") status: String
+    ): Call<List<TransactionResponse>>
 
     @GET("api/transactions/courier/ongoing")
     suspend fun getCourierOngoingTransactions(

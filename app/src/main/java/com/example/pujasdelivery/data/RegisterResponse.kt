@@ -15,6 +15,7 @@ data class UserData(
     @SerializedName("email") val email: String,
     @SerializedName("firebase_uid") val firebaseUid: String,
     @SerializedName("role") val role: String,
+    @SerializedName("profile_photo") val profilePhoto: String? = null,
     @SerializedName("created_at") val createdAt: String,
     @SerializedName("updated_at") val updatedAt: String
 )

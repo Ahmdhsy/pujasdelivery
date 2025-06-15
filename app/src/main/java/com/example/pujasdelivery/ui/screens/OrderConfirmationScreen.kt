@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.pujasdelivery.api.RetrofitClient
 import com.example.pujasdelivery.data.TransactionResponse
+import com.example.pujasdelivery.data.TransactionItem
 import com.example.pujasdelivery.viewmodel.DashboardViewModel
 import com.google.firebase.auth.FirebaseAuth
 import retrofit2.Call
@@ -40,9 +42,10 @@ fun OrderConfirmationScreen(
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Placeholder untuk data kurir (ganti dengan API jika tersedia)
+    // Data statis untuk kurir dan status
     val courierName = "Budi Kurir"
     val whatsappNumber = "6281234567890"
+    val orderStatus = "Sedang Diproses"
 
     // Ambil detail transaksi
     LaunchedEffect(orderId) {
@@ -108,7 +111,7 @@ fun OrderConfirmationScreen(
                 )
             }
             Text(
-                text = "Status Pesanan #$orderId",
+                text = "Status Pesanan #${transaction?.data?.id ?: orderId}",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
@@ -157,6 +160,7 @@ fun OrderConfirmationScreen(
                 return@Column
             }
 
+            // Informasi Umum
             Text(
                 text = "Cek Status Pesanan",
                 style = MaterialTheme.typography.bodyMedium,
@@ -171,41 +175,47 @@ fun OrderConfirmationScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Status Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(4.dp, shape = RoundedCornerShape(12.dp)),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                Column(
+            transaction?.data?.let { data ->
+                Card(
                     modifier = Modifier
-                        .padding(16.dp)
                         .fillMaxWidth()
+                        .shadow(4.dp, shape = RoundedCornerShape(12.dp)),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    )
                 ) {
-                    Text(
-                        text = transaction?.data?.status?.replaceFirstChar { it.uppercase() } ?: "Sedang Diproses",
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = when (transaction?.data?.status?.lowercase()) {
-                            "pending" -> "Pesanan Anda sedang menunggu konfirmasi."
-                            "confirmed" -> "Pesanan Anda telah dikonfirmasi!"
-                            "delivered" -> "Pesanan Anda telah dikirim."
-                            else -> "Pesanan Anda sedang diproses!"
-                        },
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Column(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Status: $orderStatus",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Pesanan Anda sedang diproses!",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Nama Penerima: ${data.userName}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = "Alamat Gedung: ${data.gedungName}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Courier Card
+            // Courier Card (Statis)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -260,62 +270,44 @@ fun OrderConfirmationScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Order Details Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(4.dp, shape = RoundedCornerShape(12.dp)),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                Column(
+            transaction?.data?.let { data ->
+                Card(
                     modifier = Modifier
-                        .padding(16.dp)
                         .fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Total Pesanan",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            text = "Rp. ${transaction?.data?.totalPrice?.toInt() ?: 0}",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Detail Pesanan",
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                        .shadow(4.dp, shape = RoundedCornerShape(12.dp)),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    transaction?.data?.items?.forEach { item ->
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth()
+                    ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Menu ID ${item.menuId} (x${item.quantity})",
-                                style = MaterialTheme.typography.bodySmall
+                                text = "Total Pesanan (${data.items.sumOf { it.quantity }} menu)",
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                             )
                             Text(
-                                text = "Rp. ${item.subtotal.toInt()}",
-                                style = MaterialTheme.typography.bodySmall
+                                text = "Rp. ${data.totalPrice.toInt()}",
+                                style = MaterialTheme.typography.bodyLarge
                             )
                         }
-                        if (!item.catatan.isNullOrEmpty()) {
-                            Text(
-                                text = "Catatan: ${item.catatan}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Detail Pesanan",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        data.items.forEach { item ->
+                            OrderMenuCard(item = item)
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
                     }
                 }
             }
@@ -340,6 +332,75 @@ fun OrderConfirmationScreen(
                     color = MaterialTheme.colorScheme.onPrimary,
                     style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun OrderMenuCard(item: TransactionItem) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(2.dp, shape = RoundedCornerShape(12.dp)),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Image placeholder
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.LightGray),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No Image",
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = item.menuName,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = item.tenantName,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = "Rp. ${item.price.toInt()} x ${item.quantity}",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "Subtotal: Rp. ${item.subtotal.toInt()}",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                if (!item.catatan.isNullOrEmpty()) {
+                    Text(
+                        text = "Catatan: ${item.catatan}",
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
             }
         }
     }

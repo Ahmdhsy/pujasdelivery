@@ -13,7 +13,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="390dp"
         app:boxStrokeColor="@color/blue"
         app:hintTextColor="@color/blue"
         app:layout_constraintEnd_toEndOf="parent"
@@ -106,7 +105,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="100dp"
-        android:layout_marginBottom="60dp"
         android:background="@color/orange"
         android:text="Daftar"
         android:textColor="@color/black"
@@ -117,12 +115,10 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/confirmPasswordLayout" />
 
-
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="60dp"
         android:textColor="@color/black"
         android:text="Sudah punya akun!"
         app:layout_constraintBottom_toBottomOf="parent"

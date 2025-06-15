@@ -281,7 +281,7 @@ fun OrderDetailScreen(
                             }
 
                             // Tombol "Selesai" hanya muncul untuk status "Dalam Pengantaran"
-                            if (currentTransaction.status.lowercase() == "dalam pengantaran") {
+                            if (currentTransaction.status.lowercase() == "pengantaran") {
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Button(
                                     onClick = {
