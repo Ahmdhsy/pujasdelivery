@@ -232,10 +232,10 @@ fun ProfileScreen(navController: NavHostController) {
                             .size(24.dp)
                             .align(Alignment.BottomEnd)
                             .background(Color.White, CircleShape)
-                            .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape) // Outline biru
-                            .padding(4.dp) // Padding untuk ikon terlihat jelas
+                            .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                            .padding(4.dp)
                             .clickable { imagePickerLauncher.launch("image/*") },
-                        tint = MaterialTheme.colorScheme.primary // Warna ikon biru
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -271,7 +271,7 @@ fun ProfileScreen(navController: NavHostController) {
                                 ),
                                 modifier = Modifier.align(Alignment.Start)
                             )
-                            Spacer(modifier = Modifier.height(12.dp)) // Jarak dengan field
+                            Spacer(modifier = Modifier.height(12.dp))
                             OutlinedTextField(
                                 value = editedName,
                                 onValueChange = { editedName = it },
@@ -324,7 +324,7 @@ fun ProfileScreen(navController: NavHostController) {
                                 ),
                                 modifier = Modifier.align(Alignment.Start)
                             )
-                            Spacer(modifier = Modifier.height(8.dp)) // Jarak dengan field
+                            Spacer(modifier = Modifier.height(8.dp))
                             OutlinedTextField(
                                 value = email,
                                 onValueChange = {},
@@ -362,105 +362,105 @@ fun ProfileScreen(navController: NavHostController) {
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
+                }
+            }
 
-                    Spacer(modifier = Modifier.weight(1f)) // Dorong tombol ke bawah
+            Spacer(modifier = Modifier.weight(1f)) // Dorong tombol ke bawah
 
-                    // Tombol
-                    Row(
+            // Tombol
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                if (isEditing) {
+                    OutlinedButton(
+                        onClick = { isEditing = false },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 24.dp), // Jarak dengan email
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .weight(1f)
+                            .height(48.dp)
+                            .padding(end = 8.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                        shape = RoundedCornerShape(8.dp)
                     ) {
-                        if (isEditing) {
-                            OutlinedButton(
-                                onClick = { isEditing = false },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                                    .padding(end = 8.dp),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = "Batalkan",
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = Raleway
-                                )
+                        Text(
+                            text = "Batalkan",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = Raleway
+                        )
+                    }
+                    Button(
+                        onClick = {
+                            if (editedName.isNotBlank()) {
+                                saveName()
+                            } else {
+                                errorMessage = "Nama tidak boleh kosong"
                             }
-                            Button(
-                                onClick = {
-                                    if (editedName.isNotBlank()) {
-                                        saveName()
-                                    } else {
-                                        errorMessage = "Nama tidak boleh kosong"
-                                    }
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                                    .padding(start = 8.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = "Simpan",
-                                    color = Color.White,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = Raleway
-                                )
-                            }
-                        } else {
-                            Button(
-                                onClick = { isEditing = true },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                                    .padding(end = 8.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = "Edit",
-                                    color = Color.White,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = Raleway
-                                )
-                            }
-                            Button(
-                                onClick = {
-                                    sharedPreferences.edit().clear().apply()
-                                    firebaseAuth.signOut()
-                                    val intent = Intent(context, SignInActivity::class.java)
-                                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                    context.startActivity(intent)
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                                    .padding(start = 8.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFDC3545)
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = "Keluar Akun",
-                                    color = Color.White,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = Raleway
-                                )
-                            }
-                        }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                            .padding(start = 8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "Simpan",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = Raleway
+                        )
+                    }
+                } else {
+                    Button(
+                        onClick = { isEditing = true },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                            .padding(end = 8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "Edit",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = Raleway
+                        )
+                    }
+                    Button(
+                        onClick = {
+                            sharedPreferences.edit().clear().apply()
+                            firebaseAuth.signOut()
+                            val intent = Intent(context, SignInActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                            .padding(start = 8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFDC3545)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "Keluar Akun",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = Raleway
+                        )
                     }
                 }
             }
